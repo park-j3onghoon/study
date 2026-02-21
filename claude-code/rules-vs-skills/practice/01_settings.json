@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep *)",
+      "WebSearch",
+      "Read"
+    ],
+    "ask": [
+      "WebFetch",
+      "Bash(git commit *"
+    ],
+    "deny": [
+      "Write",
+      "Bash(rm -rf *)"
+    ]
+  }
+}

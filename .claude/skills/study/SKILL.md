@@ -1,18 +1,25 @@
+---
+name: study
+description: "3단계 학습 스킬: Explain → Execute → Quiz. 사용자가 무언가를 물어보거나 학습을 요청하면 자동 발동. 발동 키워드: '~를 공부하자', '~가 뭐야', '~이 뭐야', '~ 설명해줘', '~ 알려줘', '~ 궁금해', '~의 차이', '~랑 ~랑 차이', '~ 어떻게 동작해', '~ 이해가 안돼', '~ 알고 싶어'. 주제 불문, 질문이나 호기심 표현이면 무조건 발동한다."
+---
+
 # study
 
 3단계 학습 스킬: Explain → Execute → Quiz
 
-세부 규칙은 `rules/` 하위 파일 참조. 필요한 시점에 해당 파일을 Read한다.
-- `rules/logging.md` — 학습 로그 기록 형식, 약점 태그
-- `rules/weakness.md` — 교차 약점 분석, 보완 전략 표
-- `rules/session-end.md` — 세션 요약 리포트, 커밋/푸시
+세부 가이드는 `guides/` 하위 파일 참조. 필요한 시점에 해당 파일을 Read한다.
+- `guides/logging.md` — 학습 로그 기록 형식, 약점 태그
+- `guides/weakness.md` — 교차 약점 분석, 보완 전략 표
+- `guides/session-end.md` — 세션 요약 리포트, 커밋/푸시
 
 ## 발동 조건
 
 두 가지 모드로 발동한다:
 
 - **학습 모드 (Full Cycle)**: "~를 공부하자", "~를 공부할거야" 등 명시적 학습 요청 → 전체 사이클 (Step 0~3)
-- **질문 모드 (Quick Explain)**: "~가 뭐야?", "~이 뭐야?", "~ 설명해줘", "~ 어떻게 동작해?" 등 개념 질문 → Quick Explain 플로우
+- **질문 모드 (Quick Explain)**: 주제 불문, 질문·호기심 표현이면 발동 → Quick Explain 플로우
+  - 예시: "~가 뭐야?", "~이 뭐야?", "~ 설명해줘", "~ 알려줘", "~ 궁금해", "~의 차이가 뭐야?", "~랑 ~랑 차이", "~ 어떻게 동작해?", "~ 이해가 안돼", "~ 알고 싶어"
+  - 핵심: 의문문이거나 호기심/학습 의도가 담긴 표현이면 **무조건 발동**
 
 ## Quick Explain 플로우
 
@@ -77,10 +84,10 @@
 
 ## 세션 종료
 
-사이클 종료 후 → `rules/session-end.md` 읽고 수행:
+사이클 종료 후 → `guides/session-end.md` 읽고 수행:
 1. 세션 요약 리포트 (파일/설정/권한 변경사항 포함)
-2. 학습 로그 기록 (`rules/logging.md`)
-3. 교차 약점 분석 (`rules/weakness.md`)
+2. 학습 로그 기록 (`guides/logging.md`)
+3. 교차 약점 분석 (`guides/weakness.md`)
 4. git commit & push
 
 ## 디렉터리 구조

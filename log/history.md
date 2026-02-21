@@ -1,3 +1,15 @@
+## 2026-02-21 | claude-code > rules-vs-skills
+
+- 학습 내용: Rules(권한 시스템, settings.json)과 Skills(지식 확장, SKILL.md)의 차이, 파일 구조, 우선순위
+- 퀴즈 결과: 4/4 (전체 정답)
+- 커버리지: 실습 70% / 퀴즈 100% / 총 85% (누적 1사이클)
+- 틀린 문제: 없음
+- 남은 영역: Managed Rules 실습, allowed-tools 등 SKILL.md 고급 frontmatter, Hooks와의 연계
+- 질문/혼란: 스킬 내부 rules/ 폴더와 Claude Code Rules 혼동 (→ guides/로 리네임하여 해소)
+- 약점 태그: #용어혼동
+  - 실습에서 `user-invocable`(boolean)에 트리거 키워드를 적음 — 필드 역할 혼동
+  - 실습에서 `Bash(git commit *` 닫는 괄호 누락 — 문법 실수
+
 ## 2026-02-17 | claude-code > basics (선행 학습 — 미완료)
 
 - 학습 내용: Claude Code 기본 구조, 설정 파일 체계, 권한 시스템, CLI 명령어
