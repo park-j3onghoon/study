@@ -1,0 +1,7 @@
+interface:
+  display_name: "Study"
+  short_description: "Explain-Execute-Quiz Korean learning coach"
+  default_prompt: "Use $study to teach a topic in Korean with Explain, Execute, and Quiz."
+
+policy:
+  allow_implicit_invocation: true
