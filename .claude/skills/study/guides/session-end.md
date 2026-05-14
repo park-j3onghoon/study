@@ -50,3 +50,10 @@
 1. 변경된 파일들을 `git add` (학습 자료, 로그, 설정 등)
 2. 커밋 메시지: `study: {대주제}/{소주제} - 사이클 {N}회 ({정답률}%)`
 3. `git push`까지 수행
+
+## 5. 옵시디언 내보내기 (비동기)
+
+→ `guides/obsidian-export.md` 참조
+
+`concepts/` 파일을 옵시디언 Vault에 백그라운드로 내보낸다.
+**현재 세션을 블로킹하지 않음** — Bash `run_in_background: true` 사용.
