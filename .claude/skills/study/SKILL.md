@@ -1,156 +1,175 @@
 ---
 name: study
-description: "3단계 학습 스킬: Explain → Execute → Quiz. 사용자가 무언가를 물어보거나 학습을 요청하면 자동 발동. 발동 키워드: '~를 공부하자', '~가 뭐야', '~이 뭐야', '~ 설명해줘', '~ 알려줘', '~ 궁금해', '~의 차이', '~랑 ~랑 차이', '~ 어떻게 동작해', '~ 이해가 안돼', '~ 알고 싶어'. 주제 불문, 질문이나 호기심 표현이면 무조건 발동한다."
+description: "5단계 학습 스킬 v2: Explain → Sketch → Execute → Quiz → Consolidate (+옵션 Verify). 사용자가 무언가를 물어보거나 학습을 요청하면 자동 발동. 발동 키워드: '~를 공부하자', '~가 뭐야', '~이 뭐야', '~ 설명해줘', '~ 알려줘', '~ 궁금해', '~의 차이', '~랑 ~랑 차이', '~ 어떻게 동작해', '~ 이해가 안돼', '~ 알고 싶어'. 주제 불문, 질문이나 호기심 표현이면 무조건 발동한다."
 ---
 
-# study
+# study (v2)
 
-3단계 학습 스킬: Explain → Execute → Quiz
+5단계 학습 스킬. 세부 규칙은 `guides/` 하위 파일에서 필요한 시점에 Read한다.
 
-세부 가이드는 `guides/` 하위 파일 참조. 필요한 시점에 해당 파일을 Read한다.
-- `guides/logging.md` — 학습 로그 기록 형식, 약점 태그
-- `guides/weakness.md` — 교차 약점 분석, 보완 전략 표
-- `guides/session-end.md` — 세션 요약 리포트, 커밋/푸시, 옵시디언 내보내기
-- `guides/obsidian-export.md` — 옵시디언 비동기 내보내기 규칙
+## 단계 → 가이드 매핑
 
-## 맥락 복원 전략 (체크포인트)
+| 단계 | 가이드 | 비고 |
+|---|---|---|
+| 세션 시작 훅 | `guides/fsrs.md` | 학습 모드만, 일일 1회 캡 |
+| Step 0 선행 점검 | `guides/weakness.md` | 약점·다음 주제 추천 |
+| Step 1 Explain | — | 변경 없음 |
+| Step 1.5 Sketch | `guides/sketch.md` | Mermaid, "스케치 패스"로 스킵 |
+| Step 1.7 Q&A | — | 변경 없음 |
+| Step 2 Execute + Feynman | `guides/feynman.md` | 모드 A/B/C + 5문장 설명 |
+| Step 3 Quiz | `guides/bloom.md` | 자신감 예측·Bloom·점진적 힌트·재퀴즈 |
+| Step 3.5 Consolidate | `guides/consolidate.md` | Glossary·Anti-pattern·ADR |
+| Step 4 Verify (옵션) | `guides/verify.md` | 마이크로 프로젝트 or Pre-mortem |
+| 세션 종료 | `guides/session-end.md`, `guides/logging.md`, `guides/obsidian-export.md` | FSRS 업데이트·다음 주제 추천 포함 |
+| 데이터 스키마 | `guides/schema-v2.md` | frontmatter·meta JSON·17개 태그 |
+| 마이그레이션 | `guides/migration-v1-to-v2.md` | v1 concepts lazy backfill |
 
-긴 학습 세션에서 맥락 압축이 일어나도 학습 흐름을 유지하기 위한 규칙.
+## 발동 조건 (2모드)
 
-**원칙: concepts/ 파일이 영구 체크포인트 역할을 한다.**
+- **학습 모드 (Full Cycle)**: "~를 공부하자/공부할거야" 등 명시적 학습 요청 → 전체 Step 0~4
+- **Quick Explain (질문 모드)**: 의문문·호기심 표현 → Step 1 + 1.5 Sketch + 1.7 Q&A만, FSRS due 알림·Feynman·Quiz·Consolidate·Verify 스킵
+  - 마지막에 "전체 학습 사이클로 넘어갈까요?" 묻고 "예"면 Full Cycle 진입
 
-각 Step 전환 시 반드시:
-1. **저장**: 현재 Step 결과를 `concepts/` 파일에 즉시 기록 (이미 수행 중)
-2. **복원**: 다음 Step 시작 전에 `concepts/` 파일을 Read해서 맥락 복원
+## 맥락 복원 (체크포인트)
+
+긴 세션에서 맥락 압축이 일어나도 학습 흐름 유지. **concepts/{개념}.md 파일이 영구 체크포인트.**
+
+각 Step 전환 시:
+1. **저장**: 현재 Step 결과를 즉시 `concepts/`에 기록
+2. **복원**: 다음 Step 시작 전에 `concepts/{개념}.md` + 동일 디렉토리 `meta/{개념}.json` Read
 
 ```
-Step 0 → Step 1 진입 시: log/history.md, log/weakness.md Read
-Step 1 → Step 2 진입 시: concepts/{개념}.md Read (방금 저장한 설명 + Q&A)
-Step 2 → Step 3 진입 시: concepts/{개념}.md Read (실습 결과 반영 확인)
-Step 3 → 세션 종료 시: concepts/{개념}.md + log/ Read (퀴즈 채점용)
+Step 0 → 1: log/review-queue.md, log/history.md, log/weakness.md Read
+Step 1 → 1.5: concepts/{개념}.md Read
+Step 1.5 → 1.7: concepts/{개념}.md (Mermaid 반영분) Read
+Step 1.7 → 2: concepts/{개념}.md (Q&A 반영분) Read
+Step 2 → 3: concepts/{개념}.md (Execute·Feynman 결과) Read
+Step 3 → 3.5: concepts/{개념}.md + meta/{개념}.json Read (채점 결과)
+Step 3.5 → 4: concepts/{개념}.md (Consolidate 결과) Read
+Step 4 → 세션 종료: concepts/{개념}.md + meta/{개념}.json + log/ Read
 ```
 
-이렇게 하면 대화 맥락이 압축되어도 파일에서 학습 내용을 복원할 수 있다.
+## 세션 시작 훅 (학습 모드)
 
-## 발동 조건
+`log/review-queue.md`를 Read. "Due Today"가 비어 있지 않으면 사용자에게:
+- 복습 카드 {N}개 진행
+- 새 주제 학습
+- 둘 다 (복습 우선)
 
-두 가지 모드로 발동한다:
-
-- **학습 모드 (Full Cycle)**: "~를 공부하자", "~를 공부할거야" 등 명시적 학습 요청 → 전체 사이클 (Step 0~3)
-- **질문 모드 (Quick Explain)**: 주제 불문, 질문·호기심 표현이면 발동 → Quick Explain 플로우
-  - 예시: "~가 뭐야?", "~이 뭐야?", "~ 설명해줘", "~ 알려줘", "~ 궁금해", "~의 차이가 뭐야?", "~랑 ~랑 차이", "~ 어떻게 동작해?", "~ 이해가 안돼", "~ 알고 싶어"
-  - 핵심: 의문문이거나 호기심/학습 의도가 담긴 표현이면 **무조건 발동**
-
-## Quick Explain 플로우
-
-질문 모드 진입 시:
-1. **Step 1 (Explain)** 수행 — `concepts/`에 마크다운 저장 포함
-2. **Step 1.5 (Q&A)** 수행
-3. "전체 학습 사이클로 넘어갈까요?" 질문
-   - **"예"** → Step 2 (Execute) → Step 3 (Quiz) → 세션 종료 처리
-   - **"아니오"** → 간단 로그 기록 후 종료 (학습 로그에 Quick Explain으로 기록)
-
-## 사전 준비 (학습 모드)
-
-1. `~/git/study/log/history.md` — 학습 이력 확인
-2. `~/git/study/log/weakness.md` — 교차 약점 프로필 확인
-3. 과거 기록 + 약점 패턴 종합하여 설명/실습/퀴즈 조절
+일일 1회 알림 캡. Quick Explain 모드는 스킵. 상세: `guides/fsrs.md`.
 
 ## Step 0. 선행 개념 점검
 
-1. 선행 개념 목록을 정리하여 사용자에게 보여준다
-2. 선행 개념마다 **퀴즈 3문제**로 검증 (AskUserQuestion, 1문제씩)
-   - `[하]` 기본 정의 → `[중]` 동작 원리 → `[상]` 응용
-   - **3문제 모두 정답** → 통과
-   - **1문제라도 오답** → 해당 선행 개념부터 전체 사이클 수행
-3. 선행 개념이 여러 개면 의존 순서대로 진행
+1. 학습 모드 첫 진입 시 `log/weakness.md`·`log/history.md`를 Read하여 활성 약점과 누적 도달 Bloom 레벨 확인
+2. 사용자에게 학습 주제와 `domain`(tech/system-design/softskill/process) 확인 — 디렉토리 추정이 가능하면 추정값 제시
+3. 선행 개념 목록 정리 → 각 선행 개념마다 **퀴즈 3문제**(하·중·상)로 검증
+   - 3문제 모두 정답 → 통과
+   - 1문제라도 오답 → 해당 선행 개념부터 전체 사이클
 4. 모두 통과하면 Step 1로
 
 ## Step 1. Explain — 1개
 
 - **공식 문서 검색**: WebSearch → WebFetch로 유효성 확인
 - **비유**: 일상 사물에 빗대어 설명
-- **도식**: ASCII 다이어그램/플로우차트
+- **도식**: ASCII 또는 (다음 Step에서 Mermaid로 강화될) 개요
 - **근본 원리**: "왜 이렇게 동작하는가"
 - 한국어로 설명. **절대 퀴즈 내지 않음**
-- `concepts/`에 마크다운으로 저장
-- **참고 자료 기록 필수** — concepts 파일 맨 아래에 `## 참고 자료` 섹션 추가:
+- `concepts/{개념}.md`에 마크다운으로 저장 + frontmatter v2 (`guides/schema-v2.md` §4)
+- **참고 자료 기록 필수** — concepts 파일 맨 아래 `## 참고 자료` 섹션:
   ```markdown
   ## 참고 자료
 
   - [문서 제목](URL) — 참고한 부분 한 줄 설명
-  - [문서 제목](URL#L100-L120) — 코드/문서의 특정 줄 범위가 있으면 표시
+  - [문서 제목](URL#L100-L120) — 줄 범위 가능하면 표시
   ```
-  - WebSearch/WebFetch로 찾은 모든 URL을 빠짐없이 기록
-  - 코드 저장소 링크는 가능하면 줄 번호(`#L숫자`)까지 포함
-  - Q&A에서 추가로 검색한 자료도 즉시 이 섹션에 추가
+  WebSearch/WebFetch로 찾은 모든 URL 기록. Q&A에서 추가 검색한 자료도 즉시 추가.
 
-## Step 1.5. Q&A
+## Step 1.5. Sketch
+
+Mermaid 다이어그램으로 멘탈 모델 시각화. 다이어그램 타입 자동 선택, "스케치 패스"로 스킵 허용. 상세: `guides/sketch.md`.
+
+## Step 1.7. Q&A
 
 - **첫 사이클**: 최대 **3번** 질문
 - **연속 2사이클+**: 질문 **무제한**
 - "없음" 입력 시 Step 2로
-- **Q&A 답변은 반드시 `concepts/` 파일에 즉시 추가** (`## Q&A` 섹션)
-- 학습 과정에서 사용자가 물어보는 **모든 내용**은 concepts/에 정리
+- Q&A 답변은 반드시 `concepts/{개념}.md`의 `## Q&A` 섹션에 즉시 추가
 
-## Step 2. Execute — 2개
+## Step 2. Execute — 2개 + Feynman
 
-쉬운 것 → 응용 순서. 주제 성격에 맞는 모드를 선택한다:
+쉬운 것 → 응용 순서. 주제 성격에 맞는 모드를 선택한다.
 
 ### 모드 선택 기준
 
-| 주제 성격 | 모드 | 예시 |
-|-----------|------|------|
-| CLI 도구 사용법 | **모드 A** (터미널 직접 실행) | Git, Docker, kubectl |
-| 코딩/구현 자체가 주제 | **모드 B** (코드 작성) | 알고리즘, 디자인 패턴, 라이브러리 API |
-| 개념/원리/이론 | **모드 C** (사고 실험·관찰·분석) | LLM 원리, 네트워크, OS 개념 |
+| 주제 성격 | 모드 | 도메인 기본 |
+|---|---|---|
+| CLI 도구 사용법 | A 터미널 직접 실행 | tech |
+| 코딩/구현 자체가 주제 | B 코드 작성 | tech |
+| 개념·원리·설계·소프트스킬 | C 사고실험·관찰·시나리오 | system-design / softskill / process |
 
 혼합 가능. 판단이 애매하면 모드 C 우선.
 
-### 모드 A — 터미널 직접 실행
-- 명령어를 직접 타이핑하고 결과를 확인
+### 모드별 절차
 
-### 모드 B — 코드 작성
-- `practice/`에 스켈레톤 생성, TODO를 채워 넣고 실행
-
-### 모드 C — 사고 실험·관찰·분석
-- **시나리오 예측**: "이 상황에서 결과는?" → 사용자가 예측 → 정답 공개·해설
-- **실제 관찰**: 도구·API·데모로 개념을 직접 관찰 (예: LLM API로 토큰 확률 확인)
-- **비교 분석**: 두 설정/방식의 차이를 실제로 비교
-- **오개념 판별**: 맞는 설명과 틀린 설명을 섞어서 구분하게 함
-- AskUserQuestion으로 출제, 즉시 피드백
+- **A**: 명령어를 직접 타이핑하고 결과 확인
+- **B**: `practice/`에 스켈레톤 생성, TODO를 채워 실행
+- **C**: 시나리오 예측 / 실제 관찰 / 비교 분석 / 오개념 판별 중 적절한 방식. AskUserQuestion으로 출제, 즉시 피드백
 
 > 실습을 직접 해보세요! 완료되면 "완료"라고 입력해주세요.
 
 **반드시 멈추고 "완료" 대기.** (모드 C는 AskUserQuestion 응답이 "완료" 역할을 대신함)
 
-## Step 3. Quiz — 4문제 (하/중/상/최상)
+### Feynman 마이크로 (Execute 완료 직후)
 
-- Q1 `[하]` 기본 개념 → Q2 `[중]` 동작 원리 → Q3 `[상]` 실무/엣지 → Q4 `[최상]` 함정/복합
-- AskUserQuestion으로 **1문제씩** 출제
-- 정답: 왜 맞는지 / 오답: 왜 틀렸는지 + 정답 설명
-- 약점 로그에서 발견된 유형은 의도적으로 포함
-- 채점 후 **커버리지 리포트** 출력 → "한 사이클 더?" 질문
-- 2사이클+ 시 남은 영역 중심, Q&A 무제한, 커버리지 누적
+5문장 자기설명 + LLM "모르는 학생" 페르소나 follow-up 2~3개. 상세: `guides/feynman.md`. "feynman 패스"로 스킵 허용.
+
+## Step 3. Quiz — 4문제
+
+자신감 예측 → Bloom 6레벨 매핑 4문항 → 점진적 힌트 → 한 세션 내 자동 재퀴즈 → 결과 비교. 상세: `guides/bloom.md`.
+
+- 첫 사이클은 bloom_target=3 (L1·L2·L3·L4)
+- 2사이클+는 누적 도달 레벨에 따라 상위 레벨 1문항씩 강제
+- 약점 로그에 발견된 유형 의도적으로 포함
+- 채점 후 **커버리지 리포트** + 자신감 예측 vs 실제 비교 → "한 사이클 더?" 질문
+
+## Step 3.5. Consolidate
+
+Glossary·Anti-pattern·ADR 자동 생성 후 사용자 확인 → concepts 파일 통합. 상세: `guides/consolidate.md`. "consolidate 패스"로 스킵 허용.
+
+## Step 4. Verify (옵션)
+
+마이크로 프로젝트 (코딩, ~30분) 또는 Pre-mortem (개념·설계, ~10분) 중 선택. 상세: `guides/verify.md`.
 
 ## 세션 종료
 
-사이클 종료 후 → `guides/session-end.md` 읽고 수행:
-1. 세션 요약 리포트 (파일/설정/권한 변경사항 포함)
-2. 학습 로그 기록 (`guides/logging.md`)
+사이클 종료 후 → `guides/session-end.md` 7단계 수행:
+1. 요약 리포트 (Sketch·Feynman·Consolidate·Verify 결과 포함)
+2. 학습 로그 (`guides/logging.md`)
 3. 교차 약점 분석 (`guides/weakness.md`)
-4. git commit & push
+4. FSRS 업데이트 + review-queue 갱신 (`guides/fsrs.md`)
+5. 다음 주제 추천 (점수 공식)
+6. git commit & push
+7. 옵시디언 비동기 export (`guides/obsidian-export.md`)
 
 ## 디렉터리 구조
 
 ```
 ~/git/study/
 ├── log/
-│   ├── history.md          # 학습 로그 (누적)
-│   └── weakness.md         # 교차 약점 프로필
+│   ├── history.md           # 학습 로그 (누적, v2 확장 컬럼)
+│   ├── weakness.md          # 교차 약점 프로필 (17개 태그)
+│   └── review-queue.md      # FSRS due 카드 우선순위
 ├── {대주제}/{소주제}/
-│   ├── concepts/{개념}.md  # 개념 정리 + Q&A
-│   └── practice/           # 실습 파일
-│       ├── 01_{기본}.{ext}
-│       └── 02_{응용}.{ext}
+│   ├── concepts/{개념}.md   # 개념 + Q&A + Glossary + Anti-pattern + ADR + 참고자료
+│   ├── meta/{개념}.json     # FSRS·confidence·bloom 동적 메타
+│   ├── practice/            # tech 도메인 실습 파일 (모드 A/B)
+│   ├── diagrams/*.mmd       # system-design 도메인 다이어그램
+│   ├── scenarios/*.md       # softskill 도메인 대화·롤플레이
+│   └── checklists/*.md      # process 도메인 체크리스트
 ```
+
+도메인별 자산 폴더는 필요할 때만 생성 (YAGNI).
+
+## v1 → v2 마이그레이션
+
+frontmatter 없는 기존 concepts 파일은 **lazy backfill** — 해당 주제 재학습 시 자동 보강. 기존 `log/weakness.md`의 무-prefix 태그는 1회성으로 `#tech/` prefix 추가. 상세: `guides/migration-v1-to-v2.md`.
