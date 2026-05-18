@@ -19,7 +19,7 @@ Obsidian Vault/
 
 - `~/git/study/{대주제}/{소주제}/concepts/*.md` → `Obsidian Vault/공부/{domain}/{대주제}/{소주제}/*.md`
 - **`meta/*.json`은 export 대상에서 제외** — study repo 전용 (FSRS·confidence·bloom 동적 메타)
-- `practice/`, `diagrams/*.mmd`, `scenarios/*.md`, `checklists/*.md`는 export 안 함 (옵시디언에서 불필요)
+- `practice/`, `diagrams/*.html`, `scenarios/*.md`, `checklists/*.md`는 export 안 함 (옵시디언에서 불필요)
 
 ## domain 추출
 

@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Protobuf — 시각화</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #1a1a1a;
+      --muted: #555;
+      --border: #e5e5e5;
+      --card: #fafafa;
+      --accent: #2563eb;
+      --c-num:    #2563eb;
+      --c-name:   #a855f7;
+      --c-value:  #16a34a;
+      --c-type:   #ea580c;
+      --c-num-bg:   #dbeafe;
+      --c-name-bg:  #f3e8ff;
+      --c-value-bg: #d1fae5;
+      --c-type-bg:  #fed7aa;
+      --ok:    #16a34a;
+      --warn:  #ea580c;
+      --error: #dc2626;
+      --ok-bg:    #d1fae5;
+      --warn-bg:  #fed7aa;
+      --error-bg: #fecaca;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f0f0f;
+        --fg: #f0f0f0;
+        --muted: #aaa;
+        --border: #2a2a2a;
+        --card: #1a1a1a;
+        --accent: #60a5fa;
+        --c-num:    #60a5fa;
+        --c-name:   #c084fc;
+        --c-value:  #22c55e;
+        --c-type:   #fb923c;
+        --c-num-bg:   #1e3a8a;
+        --c-name-bg:  #3b0764;
+        --c-value-bg: #064e3b;
+        --c-type-bg:  #431407;
+        --ok:    #22c55e;
+        --warn:  #fb923c;
+        --error: #ef4444;
+        --ok-bg:    #064e3b;
+        --warn-bg:  #431407;
+        --error-bg: #450a0a;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      line-height: 1.6;
+      padding: 16px;
+    }
+    .container { max-width: 980px; margin: 0 auto; }
+    h1 { font-size: 24px; margin: 8px 0 4px; }
+    h2 { font-size: 18px; margin: 0 0 12px; }
+    .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+    .toc {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 16px 0 24px;
+      font-size: 14px;
+    }
+    .toc ul { margin: 4px 0; padding-left: 18px; }
+    .toc a { color: var(--accent); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .diagram {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 24px 0;
+      background: var(--card);
+    }
+    .diagram > .canvas { overflow-x: auto; padding: 8px 0; }
+    .caption {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border);
+    }
+    svg { display: block; height: auto; }
+    svg text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+    code, .mono {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+      background: var(--bg);
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: var(--bg); font-weight: 600; }
+    .scroll-x { overflow-x: auto; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    @media (min-width: 640px) {
+      .compare-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      background: var(--bg);
+      font-size: 13px;
+    }
+    .card-title { font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+    .ok    { color: var(--ok); background: var(--ok-bg); }
+    .warn  { color: var(--warn); background: var(--warn-bg); }
+    .error { color: var(--error); background: var(--error-bg); }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    @media print {
+      body { background: #fff; color: #000; padding: 0; }
+      .diagram, .card { background: #fff; border-color: #999; }
+      .toc { background: #fff; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Protobuf — 시각화</h1>
+  <div class="subtitle">Oneof + Updating + Backwards Compatibility. 5개 다이어그램 단일 파일.</div>
+
+  <nav class="toc" aria-label="목차">
+    <strong>목차</strong>
+    <ul>
+      <li><a href="#d1">① 직렬화 결과 분해 — 번호 vs 이름</a></li>
+      <li><a href="#d2">② v1↔v2 양방향 호환 (필드 추가)</a></li>
+      <li><a href="#d3">③ 번호 재사용 위험 시나리오</a></li>
+      <li><a href="#d4">④ wire type 그룹 호환 매트릭스</a></li>
+      <li><a href="#d5">⑤ Oneof — 라디오 다이얼 비유</a></li>
+    </ul>
+  </nav>
+
+  <!-- ============== ① 직렬화 결과 분해 ============== -->
+  <section id="d1" class="diagram" aria-labelledby="d1-title">
+    <h2 id="d1-title">① 직렬화 결과 분해 — 번호 vs 이름</h2>
+    <p style="margin: 0 0 8px; font-size: 13px;">
+      <code>message User { int32 id = 1; string name = 2; }</code> 의 <code>User{id=42, name="Teddy"}</code> 직렬화:
+    </p>
+    <div class="canvas">
+      <svg viewBox="0 0 900 320" width="900" role="img" aria-label="Protobuf wire format byte breakdown">
+        <!-- proto schema (top) -->
+        <text x="20" y="30" font-size="14" font-weight="600" fill="var(--fg)">.proto 스키마</text>
+        <rect x="20" y="40" width="380" height="100" rx="6" fill="var(--bg)" stroke="var(--border)" stroke-width="1.5"/>
+        <text x="35" y="65" font-size="14" font-family="ui-monospace, monospace" fill="var(--fg)">
+          <tspan fill="var(--c-type)">message</tspan> User {
+        </text>
+        <text x="50" y="88" font-size="14" font-family="ui-monospace, monospace" fill="var(--fg)">
+          <tspan fill="var(--c-type)">int32</tspan> <tspan fill="var(--c-name)">id</tspan> = <tspan fill="var(--c-num)" font-weight="600">1</tspan>;
+        </text>
+        <text x="50" y="111" font-size="14" font-family="ui-monospace, monospace" fill="var(--fg)">
+          <tspan fill="var(--c-type)">string</tspan> <tspan fill="var(--c-name)">name</tspan> = <tspan fill="var(--c-num)" font-weight="600">2</tspan>;
+        </text>
+        <text x="35" y="134" font-size="14" font-family="ui-monospace, monospace" fill="var(--fg)">}</text>
+
+        <!-- arrow down -->
+        <line x1="210" y1="150" x2="210" y2="180" stroke="var(--muted)" stroke-width="2" marker-end="url(#arrow1)"/>
+        <text x="220" y="170" font-size="12" fill="var(--muted)">직렬화</text>
+        <defs>
+          <marker id="arrow1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="var(--muted)"/>
+          </marker>
+        </defs>
+
+        <!-- bytes (middle) -->
+        <text x="20" y="205" font-size="14" font-weight="600" fill="var(--fg)">바이트 (hex)</text>
+        <g font-family="ui-monospace, monospace" font-size="16" font-weight="600">
+          <rect x="40"  y="215" width="40" height="32" rx="3" fill="var(--c-num-bg)" stroke="var(--c-num)" stroke-width="1"/>
+          <text x="60" y="237" text-anchor="middle" fill="var(--c-num)">08</text>
+          <rect x="85"  y="215" width="40" height="32" rx="3" fill="var(--c-value-bg)" stroke="var(--c-value)" stroke-width="1"/>
+          <text x="105" y="237" text-anchor="middle" fill="var(--c-value)">2A</text>
+          <rect x="130" y="215" width="40" height="32" rx="3" fill="var(--c-num-bg)" stroke="var(--c-num)" stroke-width="1"/>
+          <text x="150" y="237" text-anchor="middle" fill="var(--c-num)">12</text>
+          <rect x="175" y="215" width="40" height="32" rx="3" fill="var(--c-value-bg)" stroke="var(--c-value)" stroke-width="1"/>
+          <text x="195" y="237" text-anchor="middle" fill="var(--c-value)">05</text>
+          <rect x="220" y="215" width="40" height="32" rx="3" fill="var(--c-value-bg)" stroke="var(--c-value)" stroke-width="1"/>
+          <text x="240" y="237" text-anchor="middle" fill="var(--c-value)">54</text>
+          <rect x="265" y="215" width="40" height="32" rx="3" fill="var(--c-value-bg)" stroke="var(--c-value)" stroke-width="1"/>
+          <text x="285" y="237" text-anchor="middle" fill="var(--c-value)">65</text>
+          <rect x="310" y="215" width="40" height="32" rx="3" fill="var(--c-value-bg)" stroke="var(--c-value)" stroke-width="1"/>
+          <text x="330" y="237" text-anchor="middle" fill="var(--c-value)">64</text>
+          <rect x="355" y="215" width="40" height="32" rx="3" fill="var(--c-value-bg)" stroke="var(--c-value)" stroke-width="1"/>
+          <text x="375" y="237" text-anchor="middle" fill="var(--c-value)">64</text>
+          <rect x="400" y="215" width="40" height="32" rx="3" fill="var(--c-value-bg)" stroke="var(--c-value)" stroke-width="1"/>
+          <text x="420" y="237" text-anchor="middle" fill="var(--c-value)">79</text>
+        </g>
+
+        <!-- labels below bytes -->
+        <text x="60"  y="265" font-size="11" text-anchor="middle" fill="var(--c-num)" font-weight="600">필드1키</text>
+        <text x="60"  y="280" font-size="10" text-anchor="middle" fill="var(--muted)">tag</text>
+        <text x="105" y="265" font-size="11" text-anchor="middle" fill="var(--c-value)" font-weight="600">42</text>
+        <text x="105" y="280" font-size="10" text-anchor="middle" fill="var(--muted)">id 값</text>
+        <text x="150" y="265" font-size="11" text-anchor="middle" fill="var(--c-num)" font-weight="600">필드2키</text>
+        <text x="150" y="280" font-size="10" text-anchor="middle" fill="var(--muted)">tag</text>
+        <text x="195" y="265" font-size="11" text-anchor="middle" fill="var(--c-value)" font-weight="600">5</text>
+        <text x="195" y="280" font-size="10" text-anchor="middle" fill="var(--muted)">길이</text>
+        <text x="307" y="265" font-size="11" text-anchor="middle" fill="var(--c-value)" font-weight="600">"Teddy"</text>
+        <text x="307" y="280" font-size="10" text-anchor="middle" fill="var(--muted)">UTF-8 5바이트</text>
+
+        <!-- callout box (right) -->
+        <rect x="490" y="40" width="390" height="240" rx="8" fill="var(--bg)" stroke="var(--accent)" stroke-width="2"/>
+        <text x="685" y="65" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">⭐ 핵심 통찰</text>
+        <text x="510" y="100" font-size="13" fill="var(--fg)" font-weight="600">바이트 안에 있는 것:</text>
+        <text x="525" y="120" font-size="13" fill="var(--c-num)">▪ 필드 <strong>번호</strong> (1, 2) → tag로 인코딩</text>
+        <text x="525" y="140" font-size="13" fill="var(--c-value)">▪ 필드 <strong>값</strong> (42, "Teddy")</text>
+        <text x="525" y="160" font-size="13" fill="var(--c-type)">▪ wire type 태그 (varint, length-delimited)</text>
+        <text x="510" y="190" font-size="13" fill="var(--error)" font-weight="600">바이트에 ❌ 없는 것:</text>
+        <text x="525" y="210" font-size="13" fill="var(--c-name)">▪ 필드 <strong>이름</strong> "id", "name"</text>
+        <text x="510" y="240" font-size="12" fill="var(--muted)">→ 이름은 .proto/내 코드에서만 라벨로 쓰임.</text>
+        <text x="510" y="258" font-size="12" fill="var(--muted)">→ 이름 바꿔도 호환됨, 번호 바꾸면 호환 깨짐.</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="dot" style="background:var(--c-num)"></span>필드 번호 (tag)</span>
+      <span class="legend-item"><span class="dot" style="background:var(--c-value)"></span>값</span>
+      <span class="legend-item"><span class="dot" style="background:var(--c-name)"></span>이름 (바이트엔 없음)</span>
+      <span class="legend-item"><span class="dot" style="background:var(--c-type)"></span>타입</span>
+    </div>
+    <div class="caption">
+      <code>.proto</code>에 적힌 <code>id</code>, <code>name</code> 같은 이름은 직렬화 바이트 어디에도 들어가지 않는다.
+      바이트에는 <strong>번호 (tag)</strong> 와 <strong>값</strong> 만 들어간다. 이게 Protobuf 컴팩트의 핵심이자 호환성의 기반.
+    </div>
+  </section>
+
+  <!-- ============== ② v1↔v2 양방향 호환 ============== -->
+  <section id="d2" class="diagram" aria-labelledby="d2-title">
+    <h2 id="d2-title">② v1 ↔ v2 양방향 호환 — 필드 추가</h2>
+    <div class="canvas">
+      <svg viewBox="0 0 920 380" width="920" role="img" aria-label="forward and backward compatibility">
+        <!-- v1 schema box -->
+        <rect x="20" y="20" width="200" height="80" rx="6" fill="var(--card)" stroke="var(--border)" stroke-width="1.5"/>
+        <text x="120" y="40" font-size="13" font-weight="600" text-anchor="middle" fill="var(--fg)">v1 스키마</text>
+        <text x="35" y="60" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">int32  id   = 1</text>
+        <text x="35" y="78" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">string name = 2</text>
+        <text x="35" y="94" font-size="11" fill="var(--muted)">(2개 필드)</text>
+
+        <!-- v2 schema box -->
+        <rect x="700" y="20" width="200" height="100" rx="6" fill="var(--card)" stroke="var(--ok)" stroke-width="2"/>
+        <text x="800" y="40" font-size="13" font-weight="600" text-anchor="middle" fill="var(--fg)">v2 스키마</text>
+        <text x="715" y="60" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">int32  id    = 1</text>
+        <text x="715" y="78" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">string name  = 2</text>
+        <text x="715" y="96" font-size="12" font-family="ui-monospace, monospace" fill="var(--ok)" font-weight="600">string email = 3 ← 추가</text>
+        <text x="715" y="114" font-size="11" fill="var(--muted)">(3개 필드)</text>
+
+        <!-- backward compat (top): v1 data → v2 code -->
+        <rect x="20" y="150" width="880" height="90" rx="8" fill="var(--ok-bg)" stroke="var(--ok)" stroke-width="1.5"/>
+        <text x="35" y="170" font-size="13" font-weight="600" fill="var(--ok)">backward compat: v1 데이터 → v2 코드</text>
+        <text x="40" y="195" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">v1 바이트:  [1: 42] [2: "Teddy"]</text>
+        <line x1="350" y1="190" x2="430" y2="190" stroke="var(--ok)" stroke-width="2" marker-end="url(#arrow-ok)"/>
+        <text x="380" y="180" font-size="11" fill="var(--ok)">v2 역직렬화</text>
+        <text x="450" y="195" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">User{id=42, name="Teddy", email=""}</text>
+        <text x="630" y="195" font-size="11" fill="var(--muted)">←</text>
+        <text x="645" y="195" font-size="11" fill="var(--c-name)">default 값 (proto3)</text>
+        <text x="40" y="225" font-size="11" fill="var(--muted)">→ proto3 모든 필드는 implicit default. 빠진 필드는 자동 채워짐. 에러 없음.</text>
+
+        <!-- forward compat (bottom): v2 data → v1 code -->
+        <rect x="20" y="260" width="880" height="100" rx="8" fill="var(--ok-bg)" stroke="var(--ok)" stroke-width="1.5"/>
+        <text x="35" y="280" font-size="13" font-weight="600" fill="var(--ok)">forward compat: v2 데이터 → v1 코드</text>
+        <text x="40" y="305" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">v2 바이트:  [1: 42] [2: "Teddy"] [3: "t@e.com"]</text>
+        <line x1="385" y1="300" x2="450" y2="300" stroke="var(--ok)" stroke-width="2" marker-end="url(#arrow-ok)"/>
+        <text x="405" y="290" font-size="11" fill="var(--ok)">v1 역직렬화</text>
+        <text x="470" y="305" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">User{id=42, name="Teddy"}</text>
+        <text x="720" y="305" font-size="11" fill="var(--muted)">← email은 unknown</text>
+        <text x="40" y="335" font-size="11" fill="var(--muted)">→ wire format이 각 필드에 (번호+wire type+길이) 적어둠. 모르는 번호 만나면 길이만큼 건너뛰면 됨.</text>
+        <text x="40" y="352" font-size="11" fill="var(--muted)">→ v1 코드는 필드 3을 자동 무시.</text>
+
+        <defs>
+          <marker id="arrow-ok" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="var(--ok)"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+    <div class="caption">
+      <strong>새 번호로 필드 추가는 양방향 호환</strong>. proto3의 default + wire format의 unknown-field-skip 덕에 가능.
+      단, 반드시 <strong>새 번호</strong>여야 한다. 기존 번호 재사용은 위험 (다음 다이어그램).
+    </div>
+  </section>
+
+  <!-- ============== ③ 번호 재사용 위험 ============== -->
+  <section id="d3" class="diagram" aria-labelledby="d3-title">
+    <h2 id="d3-title">③ 번호 재사용 위험 시나리오</h2>
+    <div class="canvas">
+      <svg viewBox="0 0 920 360" width="920" role="img" aria-label="field number reuse danger">
+        <!-- v1 -->
+        <rect x="20" y="20" width="220" height="90" rx="6" fill="var(--card)" stroke="var(--border)" stroke-width="1.5"/>
+        <text x="130" y="40" font-size="13" font-weight="600" text-anchor="middle" fill="var(--fg)">v1</text>
+        <text x="35" y="60" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">int32 id   = 1</text>
+        <text x="35" y="78" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">string name = 2</text>
+        <text x="35" y="96" font-size="12" font-family="ui-monospace, monospace" fill="var(--c-type)" font-weight="600">int32 age  = 3 ←</text>
+
+        <!-- v2 -->
+        <rect x="350" y="20" width="220" height="90" rx="6" fill="var(--card)" stroke="var(--warn)" stroke-width="2"/>
+        <text x="460" y="40" font-size="13" font-weight="600" text-anchor="middle" fill="var(--fg)">v2 (age 삭제, reserved 없음)</text>
+        <text x="365" y="60" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">int32 id   = 1</text>
+        <text x="365" y="78" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">string name = 2</text>
+        <text x="365" y="98" font-size="11" fill="var(--warn)">⚠ 3번이 비어있음</text>
+
+        <!-- v3 -->
+        <rect x="680" y="20" width="220" height="90" rx="6" fill="var(--card)" stroke="var(--error)" stroke-width="2"/>
+        <text x="790" y="40" font-size="13" font-weight="600" text-anchor="middle" fill="var(--fg)">v3 (누군가 추가)</text>
+        <text x="695" y="60" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">int32 id   = 1</text>
+        <text x="695" y="78" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">string name = 2</text>
+        <text x="695" y="96" font-size="12" font-family="ui-monospace, monospace" fill="var(--error)" font-weight="600">string nickname = 3 ❌</text>
+
+        <!-- timeline arrows -->
+        <line x1="240" y1="65" x2="350" y2="65" stroke="var(--muted)" stroke-width="2" marker-end="url(#arrow-grey)"/>
+        <line x1="570" y1="65" x2="680" y2="65" stroke="var(--muted)" stroke-width="2" marker-end="url(#arrow-grey)"/>
+        <text x="295" y="58" font-size="11" fill="var(--muted)">time</text>
+        <text x="625" y="58" font-size="11" fill="var(--muted)">time</text>
+
+        <!-- danger zone: v1 data → v3 code -->
+        <rect x="20" y="150" width="880" height="180" rx="8" fill="var(--error-bg)" stroke="var(--error)" stroke-width="1.5"/>
+        <text x="35" y="175" font-size="14" font-weight="600" fill="var(--error)">⚠ v1 데이터를 v3 코드가 역직렬화하면?</text>
+
+        <text x="40" y="200" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">v1 바이트:  [3: <tspan fill="var(--c-type)" font-weight="600">varint</tspan>: 25]   (age=25, int32로 인코딩)</text>
+        <text x="40" y="220" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">v3 기대:   [3: <tspan fill="var(--c-type)" font-weight="600">length-delimited</tspan>: "..."]  (string nickname)</text>
+
+        <text x="40" y="248" font-size="13" fill="var(--error)" font-weight="600">→ wire type 다름 → 역직렬화 에러</text>
+        <text x="40" y="268" font-size="12" fill="var(--muted)">또는 (운 나쁘게) wire type이 우연히 같으면 → 엉뚱한 값 (25라는 nickname 같은 데이터 손상)</text>
+
+        <!-- solution -->
+        <text x="40" y="298" font-size="13" fill="var(--ok)" font-weight="600">✅ 해결: 삭제 시 reserved 선언</text>
+        <text x="40" y="316" font-size="12" font-family="ui-monospace, monospace" fill="var(--fg)">  v2: reserved 3; reserved "age";</text>
+        <text x="40" y="333" font-size="11" fill="var(--muted)">  → v3에서 nickname = 3 추가 시도 시 컴파일 에러로 차단</text>
+
+        <defs>
+          <marker id="arrow-grey" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="var(--muted)"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+    <div class="caption">
+      필드를 삭제할 때 같은 번호를 새 필드가 재사용하면 옛 데이터와 새 스키마가 충돌한다.
+      <code>reserved</code> 선언으로 컴파일 시점에 사고를 막을 수 있다.
+    </div>
+  </section>
+
+  <!-- ============== ④ wire type 호환 매트릭스 ============== -->
+  <section id="d4" class="diagram" aria-labelledby="d4-title">
+    <h2 id="d4-title">④ wire type 그룹 호환 매트릭스</h2>
+    <p style="margin: 0 0 10px; font-size: 13px;">
+      <strong>같은 wire type 그룹 안에서 타입 변경은 호환.</strong> 다른 그룹으로 가면 호환 깨짐.
+    </p>
+    <div class="scroll-x">
+      <table>
+        <thead>
+          <tr>
+            <th>wire type</th>
+            <th>속한 .proto 타입</th>
+            <th>같은 그룹 안에서 변경</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="pill" style="background:var(--c-num-bg); color:var(--c-num)">varint (0)</span></td>
+            <td><code>int32, int64, uint32, uint64, sint32, sint64, bool, enum</code></td>
+            <td><span class="ok pill">✅ 호환</span> int32 ↔ int64, bool ↔ int32 등</td>
+          </tr>
+          <tr>
+            <td><span class="pill" style="background:var(--c-num-bg); color:var(--c-num)">fixed32 (5)</span></td>
+            <td><code>fixed32, sfixed32, float</code></td>
+            <td><span class="ok pill">✅ 호환</span> fixed32 ↔ float</td>
+          </tr>
+          <tr>
+            <td><span class="pill" style="background:var(--c-num-bg); color:var(--c-num)">fixed64 (1)</span></td>
+            <td><code>fixed64, sfixed64, double</code></td>
+            <td><span class="ok pill">✅ 호환</span> fixed64 ↔ double</td>
+          </tr>
+          <tr>
+            <td><span class="pill" style="background:var(--c-num-bg); color:var(--c-num)">length-delimited (2)</span></td>
+            <td><code>string, bytes, embedded message, packed repeated</code></td>
+            <td><span class="ok pill">✅ 호환</span> string ↔ bytes (의미 주의)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size: 14px; margin: 16px 0 6px;">실전 사례</h3>
+    <div class="compare-grid">
+      <div class="card ok">
+        <div class="card-title">✅ 안전한 변경</div>
+        <div class="mono">int32 score = 5 → int64 score = 5</div>
+        <div style="margin-top: 6px; font-size: 12px;">둘 다 varint. v1 데이터를 v2 코드가 자연스럽게 읽음. 반대도 OK (int32 범위 안의 값일 때).</div>
+      </div>
+      <div class="card ok">
+        <div class="card-title">✅ 안전한 변경</div>
+        <div class="mono">string raw = 7 → bytes raw = 7</div>
+        <div style="margin-top: 6px; font-size: 12px;">둘 다 length-delimited. UTF-8 검증 차이만 신경 쓰면 됨.</div>
+      </div>
+      <div class="card error">
+        <div class="card-title">❌ 위험한 변경</div>
+        <div class="mono">int32 age = 3 → string age = 3</div>
+        <div style="margin-top: 6px; font-size: 12px;">varint → length-delimited. wire type 다름. 옛 바이트 못 읽음.</div>
+      </div>
+      <div class="card error">
+        <div class="card-title">❌ 위험한 변경</div>
+        <div class="mono">float ratio = 8 → double ratio = 8</div>
+        <div style="margin-top: 6px; font-size: 12px;">fixed32 → fixed64. 같은 그룹처럼 보이지만 폭 다름. 호환 안 됨.</div>
+      </div>
+    </div>
+
+    <div class="caption">
+      <strong>⚠ protoc는 호환성 검사 안 함</strong>. 위 변경들이 컴파일은 통과한다.
+      옛 데이터와의 호환 여부는 <a href="https://buf.build" style="color:var(--accent)">buf</a> 같은 외부 도구로 별도 검증해야 한다.
+    </div>
+  </section>
+
+  <!-- ============== ⑤ Oneof — 라디오 다이얼 ============== -->
+  <section id="d5" class="diagram" aria-labelledby="d5-title">
+    <h2 id="d5-title">⑤ Oneof — 라디오 다이얼 비유</h2>
+    <div class="canvas">
+      <svg viewBox="0 0 920 340" width="920" role="img" aria-label="Oneof radio dial analogy">
+        <!-- proto code -->
+        <rect x="20" y="20" width="380" height="170" rx="6" fill="var(--bg)" stroke="var(--border)" stroke-width="1.5"/>
+        <text x="35" y="42" font-size="13" font-weight="600" fill="var(--fg)">PaymentMethod 메시지</text>
+        <text x="35" y="68" font-size="13" font-family="ui-monospace, monospace" fill="var(--fg)">
+          message PaymentMethod {
+        </text>
+        <text x="50" y="86" font-size="13" font-family="ui-monospace, monospace" fill="var(--fg)">int32 user_id = 1;</text>
+        <text x="35" y="108" font-size="13" font-family="ui-monospace, monospace" fill="var(--accent)" font-weight="600">  oneof method {</text>
+        <text x="65" y="126" font-size="13" font-family="ui-monospace, monospace" fill="var(--fg)">string credit_card = 2;</text>
+        <text x="65" y="144" font-size="13" font-family="ui-monospace, monospace" fill="var(--fg)">string paypal = 3;</text>
+        <text x="65" y="162" font-size="13" font-family="ui-monospace, monospace" fill="var(--fg)">string crypto = 4;</text>
+        <text x="50" y="180" font-size="13" font-family="ui-monospace, monospace" fill="var(--accent)" font-weight="600">  }</text>
+        <text x="35" y="188" font-size="13" font-family="ui-monospace, monospace" fill="var(--fg)">}</text>
+
+        <!-- radio dial visualization -->
+        <circle cx="640" cy="105" r="80" fill="var(--card)" stroke="var(--accent)" stroke-width="3"/>
+        <circle cx="640" cy="105" r="6" fill="var(--accent)"/>
+        <!-- channel labels -->
+        <text x="640" y="42" font-size="12" font-weight="600" fill="var(--fg)" text-anchor="middle">크레딧카드</text>
+        <text x="558" y="115" font-size="12" font-weight="600" fill="var(--muted)" text-anchor="middle">페이팔</text>
+        <text x="722" y="115" font-size="12" font-weight="600" fill="var(--muted)" text-anchor="middle">크립토</text>
+        <!-- needle -->
+        <line x1="640" y1="105" x2="640" y2="48" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+        <text x="640" y="220" font-size="13" fill="var(--muted)" text-anchor="middle">현재 채널: <tspan fill="var(--accent)" font-weight="600">크레딧카드</tspan></text>
+
+        <!-- transition -->
+        <text x="640" y="248" font-size="12" fill="var(--muted)" text-anchor="middle">paypal_email 설정 시 → 다이얼 회전</text>
+
+        <!-- below: rules -->
+        <rect x="20" y="220" width="500" height="100" rx="8" fill="var(--ok-bg)" stroke="var(--ok)" stroke-width="1.5"/>
+        <text x="35" y="240" font-size="13" font-weight="600" fill="var(--ok)">Oneof 규칙</text>
+        <text x="40" y="262" font-size="12" fill="var(--fg)">▪ 셋 중 <strong>정확히 하나만</strong> 설정 가능</text>
+        <text x="40" y="280" font-size="12" fill="var(--fg)">▪ 새 값 설정 시 기존 값 <strong>자동 클리어</strong></text>
+        <text x="40" y="298" font-size="12" fill="var(--fg)">▪ <code>WhichOneof('method')</code> API로 현재 어느 게 설정됐는지 확인</text>
+        <text x="40" y="315" font-size="12" fill="var(--muted)">▪ 비유: 라디오 다이얼 — 한 번에 한 채널만 들림</text>
+
+        <!-- compat warnings -->
+        <rect x="540" y="220" width="360" height="100" rx="8" fill="var(--warn-bg)" stroke="var(--warn)" stroke-width="1.5"/>
+        <text x="555" y="240" font-size="13" font-weight="600" fill="var(--warn)">⚠ Oneof 호환성 함정</text>
+        <text x="560" y="262" font-size="12" fill="var(--fg)">▪ ✅ Oneof에 새 필드 추가 안전</text>
+        <text x="560" y="280" font-size="12" fill="var(--fg)">▪ ❌ 일반 필드 ↔ Oneof 이동 위험</text>
+        <text x="560" y="298" font-size="12" fill="var(--fg)">▪ ❌ Oneof 간 필드 이동 위험</text>
+        <text x="560" y="316" font-size="12" fill="var(--muted)">→ 그룹 소속이 바뀌면 의미가 달라짐</text>
+      </svg>
+    </div>
+    <div class="caption">
+      Oneof는 메시지 안에서 <strong>여러 필드 중 정확히 하나만</strong> 설정되도록 강제하는 문법.
+      비즈니스 규칙(결제 수단·알림 종류 등)을 스키마 수준에서 표현. 라디오 다이얼처럼 한 번에 한 채널.
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

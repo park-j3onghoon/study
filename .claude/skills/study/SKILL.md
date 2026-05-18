@@ -14,7 +14,7 @@ description: "5단계 학습 스킬 v2: Explain → Sketch → Execute → Quiz 
 | 세션 시작 훅 | `guides/fsrs.md` | 학습 모드만, 일일 1회 캡 |
 | Step 0 선행 점검 | `guides/weakness.md` | 약점·다음 주제 추천 |
 | Step 1 Explain | — | 변경 없음 |
-| Step 1.5 Sketch | `guides/sketch.md` | Mermaid, "스케치 패스"로 스킵 |
+| Step 1.5 Sketch | `guides/sketch.md` | HTML 단일 파일, "스케치 패스"로 스킵 |
 | Step 1.7 Q&A | — | 변경 없음 |
 | Step 2 Execute + Feynman | `guides/feynman.md` | 모드 A/B/C + 5문장 설명 |
 | Step 3 Quiz | `guides/bloom.md` | 자신감 예측·Bloom·점진적 힌트·재퀴즈 |
@@ -41,7 +41,7 @@ description: "5단계 학습 스킬 v2: Explain → Sketch → Execute → Quiz 
 ```
 Step 0 → 1: log/review-queue.md, log/history.md, log/weakness.md Read
 Step 1 → 1.5: concepts/{개념}.md Read
-Step 1.5 → 1.7: concepts/{개념}.md (Mermaid 반영분) Read
+Step 1.5 → 1.7: concepts/{개념}.md + diagrams/{개념}.html Read
 Step 1.7 → 2: concepts/{개념}.md (Q&A 반영분) Read
 Step 2 → 3: concepts/{개념}.md (Execute·Feynman 결과) Read
 Step 3 → 3.5: concepts/{개념}.md + meta/{개념}.json Read (채점 결과)
@@ -71,7 +71,7 @@ Step 4 → 세션 종료: concepts/{개념}.md + meta/{개념}.json + log/ Read
 
 - **공식 문서 검색**: WebSearch → WebFetch로 유효성 확인
 - **비유**: 일상 사물에 빗대어 설명
-- **도식**: ASCII 또는 (다음 Step에서 Mermaid로 강화될) 개요
+- **도식**: ASCII 또는 (다음 Step에서 HTML 단일 파일로 강화될) 개요
 - **근본 원리**: "왜 이렇게 동작하는가"
 - 한국어로 설명. **절대 퀴즈 내지 않음**
 - `concepts/{개념}.md`에 마크다운으로 저장 + frontmatter v2 (`guides/schema-v2.md` §4)
@@ -86,7 +86,7 @@ Step 4 → 세션 종료: concepts/{개념}.md + meta/{개념}.json + log/ Read
 
 ## Step 1.5. Sketch
 
-Mermaid 다이어그램으로 멘탈 모델 시각화. 다이어그램 타입 자동 선택, "스케치 패스"로 스킵 허용. 상세: `guides/sketch.md`.
+단일 HTML 파일(외부 의존성 없는 인라인 SVG/CSS)로 멘탈 모델 시각화. 모바일·데스크탑 호환. "스케치 패스"로 스킵 허용. 상세: `guides/sketch.md`.
 
 ## Step 1.7. Q&A
 
@@ -142,14 +142,16 @@ Glossary·Anti-pattern·ADR 자동 생성 후 사용자 확인 → concepts 파�
 
 ## 세션 종료
 
-사이클 종료 후 → `guides/session-end.md` 7단계 수행:
+**학습 단위(사이클)의 종료와 채팅 세션의 종료는 별개다.** "다음 사이클에 X"는 X를 다음 학습 단위에서 한다는 뜻일 뿐, 지금 채팅을 끝내자는 신호가 아니다. 채팅 세션 종료 신호가 명확한 경우("이만 끝", "오늘은 여기까지", "세션 종료", "/clear 예정" 등)에만 아래 종료 처리에 진입한다. 모호하면 사용자에게 짧게 묻는다.
+
+**사용자가 명시적으로 종료 처리를 요청한 경우에만** → `guides/session-end.md` 단계 수행:
 1. 요약 리포트 (Sketch·Feynman·Consolidate·Verify 결과 포함)
 2. 학습 로그 (`guides/logging.md`)
 3. 교차 약점 분석 (`guides/weakness.md`)
 4. FSRS 업데이트 + review-queue 갱신 (`guides/fsrs.md`)
 5. 다음 주제 추천 (점수 공식)
-6. git commit & push
-7. 옵시디언 비동기 export (`guides/obsidian-export.md`)
+6. **사용자가 별도 요청 시** git commit (push는 또 별도 지시 필요. force push 금지)
+7. **사용자가 별도 요청 시** 옵시디언 비동기 export (`guides/obsidian-export.md`)
 
 ## 디렉터리 구조
 
@@ -163,7 +165,7 @@ Glossary·Anti-pattern·ADR 자동 생성 후 사용자 확인 → concepts 파�
 │   ├── concepts/{개념}.md   # 개념 + Q&A + Glossary + Anti-pattern + ADR + 참고자료
 │   ├── meta/{개념}.json     # FSRS·confidence·bloom 동적 메타
 │   ├── practice/            # tech 도메인 실습 파일 (모드 A/B)
-│   ├── diagrams/*.mmd       # system-design 도메인 다이어그램
+│   ├── diagrams/*.html      # 단일 파일 HTML 다이어그램 (모바일 호환, 인라인 SVG/CSS)
 │   ├── scenarios/*.md       # softskill 도메인 대화·롤플레이
 │   └── checklists/*.md      # process 도메인 체크리스트
 ```

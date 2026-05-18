@@ -7,7 +7,7 @@ study v2의 데이터 스펙. 다른 guide에서 이 파일을 참조하여 일�
 | domain | 디렉토리 예 | Step 2 기본 모드 | 추가 자산 폴더 |
 |---|---|---|---|
 | `tech` | claude-code, ai-ml, dev-tools, software-testing | A(CLI) / B(코드) | `practice/` |
-| `system-design` | system-design, observability 일부 | C + Mermaid 강조 | `diagrams/*.mmd` |
+| `system-design` | system-design, observability 일부 | C + HTML 시각화 | `diagrams/*.html` |
 | `softskill` | softskill | C — 시나리오·롤플레이 | `scenarios/*.md` |
 | `process` | harness-engineering, process | C — 체크리스트 시뮬레이션 | `checklists/*.md` |
 

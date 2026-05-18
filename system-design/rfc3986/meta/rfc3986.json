@@ -1,0 +1,15 @@
+{
+  "concept_id": "system-design/rfc3986",
+  "fsrs": {
+    "stability": 1.0,
+    "difficulty": 0.6,
+    "last_review": "2026-05-14",
+    "next_due": "2026-05-16",
+    "reps": 1,
+    "lapses": 0,
+    "state": "learning"
+  },
+  "confidence_history": [],
+  "bloom_history": [],
+  "notes": "사이클 중도 보류. Step 1(본문 + 다이어그램 + 단계별 재방문) + Step 2(실습 2개) 완료. Quiz/Consolidate/Verify 패스. 약점: §4.2 콜론 모호성 응용 미흡, base path 끝 / 유무에 따른 merge 차이 인식 부족. 다음 사이클에서 §4.2 재방문 권장."
+}

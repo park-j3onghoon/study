@@ -1,0 +1,17 @@
+{
+  "concept_id": "system-design/protobuf",
+  "fsrs": {
+    "stability": 1.5,
+    "difficulty": 0.45,
+    "last_review": "2026-05-18",
+    "next_due": "2026-05-21",
+    "reps": 1,
+    "lapses": 0,
+    "state": "learning"
+  },
+  "confidence_history": [],
+  "bloom_history": [
+    {"date": "2026-05-18", "target": 3, "correct_by_level": {"1": 1, "2": 2, "3": 1, "4": 0}, "note": "Step 2 모드 C, 작은 확인 5번 — 4/5 (타입 변경 컴파일러 자동 검사 오해)"}
+  ],
+  "notes": "Step 1 단계별 짚기로 진행 (RFC 3986에서 본문 폭포 후 흡수 부족 패턴 회피). 짚은 핵심: ① 번호 vs 이름 ② 필드 추가 호환 ③ 번호 재사용 위험 + reserved ④ Oneof ⑤ wire type 호환. 약점 후보: protoc가 호환성 자동 검사 안 한다는 점 (#tech/개념누락 약함). Quiz/Consolidate/Verify 패스."
+}
