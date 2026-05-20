@@ -20,11 +20,13 @@ class Agent:
         chosen_model = model or settings.default_model
         chosen_budget = thinking_budget if thinking_budget is not None else settings.default_thinking_budget
         history: list[dict] = list(messages)
+        tools_used: list[str] = []
         for _ in range(settings.max_tool_iterations):
             response = await self._call_model(history, chosen_model, chosen_budget)
             tool_uses = [b for b in response.content if getattr(b, "type", None) == "tool_use"]
             if not tool_uses:
-                return self._format_final(response)
+                return self._format_final(response, tools_used)
+            tools_used.extend(tu.name for tu in tool_uses)
             history.append({"role": "assistant", "content": [b.model_dump() for b in response.content]})
             history.append({"role": "user", "content": await self._run_tools(tool_uses)})
         raise RuntimeError(f"Agent exceeded max_iterations={settings.max_tool_iterations}")
@@ -56,11 +58,12 @@ class Agent:
         return max(settings.max_response_tokens, thinking_budget + 4000)
 
     @staticmethod
-    def _format_final(response: Any) -> dict:
+    def _format_final(response: Any, tools_used: list[str]) -> dict:
         return {
             "stop_reason": response.stop_reason,
             "content": [b.model_dump() for b in response.content],
             "usage": response.usage.model_dump(),
+            "tools_used": tools_used,
         }
 
 
