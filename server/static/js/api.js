@@ -32,10 +32,29 @@ export async function getResult(conceptId) {
   return r.json();
 }
 
+export function listConversations() {
+  return fetchJson("/api/conversations");
+}
+
+export function createConversation(title) {
+  return fetchJson("/api/conversations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+}
+
+export async function getConversation(id) {
+  const r = await fetch(`/api/conversations/${encodeURIComponent(id)}`);
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`getConversation ${r.status}`);
+  return r.json();
+}
+
 // SSE chat stream.
 // callbacks: { thinking_start, thinking_delta, thinking_stop, text_delta,
 //              tool_use_start, tool_use_complete, message_stop, error, unknown }
-export async function chatStream({ messages, model, thinkingBudget }, callbacks) {
+export async function chatStream({ messages, model, thinkingBudget, conversationId }, callbacks) {
   const resp = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
@@ -43,6 +62,7 @@ export async function chatStream({ messages, model, thinkingBudget }, callbacks)
       messages,
       model: model || null,
       thinking_budget: thinkingBudget,
+      conversation_id: conversationId || null,
     }),
   });
   if (!resp.ok) {

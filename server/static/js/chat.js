@@ -1,8 +1,12 @@
 // SSE-streaming chat. Wires assistant text/thinking/tool events into the DOM live.
-import { chatStream } from "/js/api.js";
+// conversation_id is persisted in localStorage so chat continues across reloads.
+import { chatStream, createConversation, getConversation } from "/js/api.js";
+
+const LS_KEY = "study.conversation_id";
 
 let messagesEl, formEl, inputEl, modelEl, effortEl, sendBtn;
 let onAssistantResponse = null;
+let conversationId = null;
 const history = []; // [{role:"user"|"assistant", content:"..."}, ...]
 
 export function init(opts) {
@@ -21,6 +25,30 @@ export function init(opts) {
       submit(e);
     }
   });
+
+  restoreConversation();
+}
+
+async function restoreConversation() {
+  const saved = localStorage.getItem(LS_KEY);
+  if (!saved) return;
+  try {
+    const conv = await getConversation(saved);
+    if (!conv) {
+      localStorage.removeItem(LS_KEY);
+      return;
+    }
+    conversationId = saved;
+    for (const m of conv.messages) {
+      if (m.role !== "user" && m.role !== "assistant") continue;
+      const content = typeof m.content === "string" ? m.content : "";
+      if (!content) continue;
+      appendMessage(m.role, content);
+      history.push({ role: m.role, content });
+    }
+  } catch {
+    localStorage.removeItem(LS_KEY);
+  }
 }
 
 async function submit(e) {
@@ -38,11 +66,18 @@ async function submit(e) {
   const toolsUsed = [];
 
   try {
+    if (!conversationId) {
+      const title = text.length > 60 ? text.slice(0, 60) + "…" : text;
+      const conv = await createConversation(title);
+      conversationId = conv.id;
+      localStorage.setItem(LS_KEY, conversationId);
+    }
     await chatStream(
       {
         messages: history,
         model: modelEl.value,
         thinkingBudget: parseInt(effortEl.value, 10),
+        conversationId,
       },
       {
         thinking_start: () => {

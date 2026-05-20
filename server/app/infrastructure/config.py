@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     default_model: str = "claude-opus-4-7"
     default_thinking_budget: int = 0
     lessons_dir: str = "./lessons"
+    conversations_dir: str = "./conversations"
     max_response_tokens: int = 8000
     max_tool_iterations: int = 10
 

@@ -15,3 +15,15 @@ class LessonNotFound(DomainException):
     def __init__(self, value: str):
         super().__init__(f"Lesson not found: {value!r}")
         self.value = value
+
+
+class InvalidConversationId(DomainException):
+    def __init__(self, value: str):
+        super().__init__(f"Invalid conversation_id: {value!r}")
+        self.value = value
+
+
+class ConversationNotFound(DomainException):
+    def __init__(self, value: str):
+        super().__init__(f"Conversation not found: {value!r}")
+        self.value = value

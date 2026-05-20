@@ -6,6 +6,25 @@ class ChatRequest(BaseModel):
     messages: list[dict]
     model: str | None = None
     thinking_budget: int | None = None
+    conversation_id: str | None = None
+
+
+class ConversationCreateRequest(BaseModel):
+    title: str
+
+
+class ConversationSummaryDTO(BaseModel):
+    id: str
+    title: str
+    created: str
+    message_count: int
+
+
+class ConversationDetailDTO(BaseModel):
+    id: str
+    title: str
+    created: str
+    messages: list[dict]
 
 
 class AnswersPayload(BaseModel):

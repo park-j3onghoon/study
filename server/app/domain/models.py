@@ -2,11 +2,12 @@
 Only stdlib imports + sibling exceptions module.
 """
 import re
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 
-from .exceptions import InvalidConceptId
+from .exceptions import InvalidConceptId, InvalidConversationId
 
 
 _CONCEPT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -76,3 +77,34 @@ class LessonSummary:
     title: str
     created: datetime
     graded: bool
+
+
+@dataclass(frozen=True)
+class ConversationId:
+    value: str
+
+    def __post_init__(self) -> None:
+        if not self.value:
+            raise InvalidConversationId(self.value)
+
+
+def new_conversation_id() -> ConversationId:
+    """Factory — domain-level uuid helper. Kept as module function (not classmethod)
+    to keep ConversationId a pure value object."""
+    return ConversationId(uuid.uuid4().hex)
+
+
+@dataclass(frozen=True)
+class Conversation:
+    id: ConversationId
+    title: str
+    created: datetime
+    messages: tuple[dict, ...]
+
+
+@dataclass(frozen=True)
+class ConversationSummary:
+    id: ConversationId
+    title: str
+    created: datetime
+    message_count: int
