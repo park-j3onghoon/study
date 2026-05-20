@@ -1,4 +1,4 @@
-// Backend API client. fetch wrappers only — no DOM/state.
+// Backend API client. fetch wrappers + SSE chat stream.
 
 async function fetchJson(url, options = {}) {
   const r = await fetch(url, options);
@@ -32,14 +32,66 @@ export async function getResult(conceptId) {
   return r.json();
 }
 
-export function chat({ messages, model, thinkingBudget }) {
-  return fetchJson("/api/chat", {
+// SSE chat stream.
+// callbacks: { thinking_start, thinking_delta, thinking_stop, text_delta,
+//              tool_use_start, tool_use_complete, message_stop, error, unknown }
+export async function chatStream({ messages, model, thinkingBudget }, callbacks) {
+  const resp = await fetch("/api/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
     body: JSON.stringify({
       messages,
       model: model || null,
       thinking_budget: thinkingBudget,
     }),
   });
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => "");
+    throw new Error(`chat ${resp.status}: ${body}`);
+  }
+  for await (const { event, data } of readSSE(resp)) {
+    const handler = callbacks[event];
+    if (handler) handler(data || {});
+    else if (callbacks.unknown) callbacks.unknown(event, data);
+  }
+}
+
+async function* readSSE(response) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      const tail = buffer.trim();
+      if (tail) {
+        const ev = parseSSEEvent(tail);
+        if (ev) yield ev;
+      }
+      break;
+    }
+    buffer += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buffer.indexOf("\n\n")) >= 0) {
+      const chunk = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 2);
+      const ev = parseSSEEvent(chunk);
+      if (ev) yield ev;
+    }
+  }
+}
+
+function parseSSEEvent(chunk) {
+  let event = "message";
+  const dataLines = [];
+  for (const line of chunk.split("\n")) {
+    if (line.startsWith("event:")) event = line.slice(6).trim();
+    else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+  }
+  if (dataLines.length === 0) return null;
+  try {
+    return { event, data: JSON.parse(dataLines.join("")) };
+  } catch {
+    return null;
+  }
 }
