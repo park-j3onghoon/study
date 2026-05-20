@@ -6,26 +6,42 @@ Adding a new repository: instantiate it instead of DiskLessonRepository.
 from pathlib import Path
 
 from ..adapters.anthropic_agent import AnthropicAgent
+from ..adapters.disk_conversation_repository import DiskConversationRepository
 from ..adapters.disk_repository import DiskLessonRepository
+from ..adapters.file_event_stream import FileEventStream
 from ..adapters.tools.echo import EchoTool
 from ..adapters.tools.grade_lesson import GradeLessonTool
 from ..adapters.tools.list_lessons import ListLessonsTool
 from ..adapters.tools.read_answers import ReadAnswersTool
 from ..adapters.tools.write_lesson import WriteLessonTool
 from ..application.chat_service import ChatService
+from ..application.conversation_service import ConversationService
 from ..application.lesson_service import LessonService
+from ..domain.ports import EventStream
 from .config import settings
 
 
 class AppState:
-    def __init__(self, lesson_service: LessonService, chat_service: ChatService):
+    def __init__(
+        self,
+        lesson_service: LessonService,
+        chat_service: ChatService,
+        conversation_service: ConversationService,
+        event_stream: EventStream,
+    ):
         self.lesson_service = lesson_service
         self.chat_service = chat_service
+        self.conversation_service = conversation_service
+        self.event_stream = event_stream
 
 
 def build() -> AppState:
-    repo = DiskLessonRepository(Path(settings.lessons_dir))
-    lesson_service = LessonService(repo)
+    lessons_path = Path(settings.lessons_dir)
+    conversations_path = Path(settings.conversations_dir)
+    lesson_repo = DiskLessonRepository(lessons_path)
+    conversation_repo = DiskConversationRepository(conversations_path)
+    lesson_service = LessonService(lesson_repo)
+    conversation_service = ConversationService(conversation_repo)
     tools = [
         EchoTool(),
         WriteLessonTool(lesson_service),
@@ -41,5 +57,11 @@ def build() -> AppState:
         max_iterations=settings.max_tool_iterations,
         max_response_tokens=settings.max_response_tokens,
     )
-    chat_service = ChatService(agent)
-    return AppState(lesson_service=lesson_service, chat_service=chat_service)
+    chat_service = ChatService(agent, conversation_service)
+    event_stream = FileEventStream(lessons_path)
+    return AppState(
+        lesson_service=lesson_service,
+        chat_service=chat_service,
+        conversation_service=conversation_service,
+        event_stream=event_stream,
+    )

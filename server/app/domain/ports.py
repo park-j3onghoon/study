@@ -10,7 +10,10 @@ CQS:
 from abc import ABC, abstractmethod
 from typing import Any, AsyncIterator
 
-from .models import Answers, ConceptId, Lesson, LessonSummary, Result
+from .models import (
+    Answers, ConceptId, Conversation, ConversationId, ConversationSummary,
+    Lesson, LessonSummary, Result,
+)
 
 
 class LessonRepository(ABC):
@@ -63,3 +66,26 @@ class Agent(ABC):
         model: str | None = None,
         thinking_budget: int | None = None,
     ) -> AsyncIterator[dict]: ...
+
+
+class EventStream(ABC):
+    """Server-pushed events the UI subscribes to (file changes etc.)."""
+
+    @abstractmethod
+    async def watch(self) -> AsyncIterator[dict]: ...
+
+
+class ConversationRepository(ABC):
+    """Persists chat conversations (id, title, message timeline)."""
+
+    @abstractmethod
+    def save(self, conversation: Conversation) -> None: ...   # Command
+
+    @abstractmethod
+    def find(self, id: ConversationId) -> Conversation | None: ...   # Query
+
+    @abstractmethod
+    def list_summaries(self) -> list[ConversationSummary]: ...   # Query
+
+    @abstractmethod
+    def exists(self, id: ConversationId) -> bool: ...   # Query

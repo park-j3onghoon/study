@@ -85,6 +85,11 @@ body {
   height: 100%;
   border: none;
   background: var(--bg);
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+#lesson-frame.loading {
+  opacity: 0.3;
 }
 
 #chat-panel {
