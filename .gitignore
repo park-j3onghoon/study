@@ -9,4 +9,5 @@ __pycache__/
 .venv/
 server/.venv/
 server/conversations/
+server/lessons/
 
