@@ -30,9 +30,16 @@ async function main() {
     },
   });
 
-  // 외부에서 lessons/ 변경 시 사이드바 자동 갱신 (다른 터미널·에디터 등)
+  // lessons/ 변경 시: 사이드바 갱신 + 새 학습지면 가운데 iframe에 자동 로드.
+  // write_lesson tool이 완료되자마자 사용자가 클릭 없이 학습 시작할 수 있게.
   events.subscribe({
-    lesson_changed: () => sidebar.refresh(),
+    lesson_changed: async ({ concept_id }) => {
+      await sidebar.refresh();
+      if (concept_id) {
+        sidebar.setActive(concept_id);
+        lesson.load(concept_id);
+      }
+    },
     lesson_graded: () => sidebar.refresh(),
     lesson_answered: () => { /* 답이 저장됐다. 사이드바 변화 없음 */ },
   });
