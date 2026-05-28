@@ -17,6 +17,11 @@ from ..domain.ports import Agent, Tool
 
 
 _MCP_SERVER_NAME = "learning"
+_MCP_TOOL_PREFIX = f"mcp__{_MCP_SERVER_NAME}__"
+
+
+def _strip_prefix(name: str) -> str:
+    return name[len(_MCP_TOOL_PREFIX):] if name.startswith(_MCP_TOOL_PREFIX) else name
 
 
 class ClaudeSDKAgent(Agent):
@@ -45,6 +50,9 @@ class ClaudeSDKAgent(Agent):
         chosen_budget = thinking_budget if thinking_budget is not None else self.default_thinking_budget
 
         options = ClaudeAgentOptions(
+            # tools=[] disables Claude Code's built-in Read/Write/Bash/etc — we only
+            # want our 5 MCP tools exposed (no filesystem access from the LLM).
+            tools=[],
             mcp_servers={_MCP_SERVER_NAME: self.mcp_config},
             allowed_tools=self.allowed_tools,
             include_partial_messages=True,
@@ -73,7 +81,7 @@ class ClaudeSDKAgent(Agent):
                         thinking_open = True
                         yield {"type": "thinking_start"}
                     elif btype == "tool_use":
-                        name = block.get("name", "")
+                        name = _strip_prefix(block.get("name", ""))
                         block_id = block.get("id")
                         if block_id:
                             tool_names[block_id] = name
@@ -92,7 +100,7 @@ class ClaudeSDKAgent(Agent):
             elif isinstance(msg, AssistantMessage):
                 for block in msg.content:
                     if isinstance(block, ToolUseBlock):
-                        tool_names[block.id] = block.name
+                        tool_names[block.id] = _strip_prefix(block.name)
                 if msg.error:
                     yield {"type": "error", "message": f"Assistant error: {msg.error}"}
             elif isinstance(msg, UserMessage):
