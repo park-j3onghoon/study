@@ -41,21 +41,21 @@ class GradeLessonTool(Tool):
     def __init__(self, service: LessonService):
         self.service = service
 
-    async def execute(self, input: dict[str, Any]) -> str:
+    async def execute(self, args: dict[str, Any]) -> str:
         try:
-            concept_id = ConceptId(input["concept_id"])
+            concept_id = ConceptId(args["concept_id"])
         except InvalidConceptId as exc:
             return f"Error: {exc}"
         result = Result(
             concept_id=concept_id,
             graded_at=datetime.now(timezone.utc),
-            score=input["score"],
+            score=args["score"],
             by_question=tuple(
                 QuestionResult(question_id=q["id"], correct=q["correct"], comment=q.get("comment", ""))
-                for q in input["by_question"]
+                for q in args["by_question"]
             ),
-            weakness_tags=tuple(input.get("weakness_tags", [])),
-            recommendation=input.get("recommendation", ""),
+            weakness_tags=tuple(args.get("weakness_tags", [])),
+            recommendation=args.get("recommendation", ""),
         )
         try:
             self.service.save_result(result)

@@ -1,16 +1,12 @@
-"""Application service for lesson lifecycle.
+"""LessonService — use cases for lesson lifecycle.
 
-CQS:
-  Commands return None and change state via the repository.
-  Queries return data and have no side effects.
-
-This layer enforces domain policy (e.g. "cannot save answers for a non-existent lesson")
-and converts between primitive inputs and domain objects when needed.
+CQS: Commands return None; Queries return data. Domain invariants live on the
+models (e.g. Lesson.submit_answers); this service just enforces existence + delegates.
 """
 from datetime import datetime, timezone
 
 from ..domain.exceptions import LessonNotFound
-from ..domain.models import Answers, ConceptId, Lesson, LessonSummary, Result
+from ..domain.models import ConceptId, Lesson, LessonSummary, Result
 from ..domain.ports import LessonRepository
 
 
@@ -22,12 +18,12 @@ class LessonService:
     def create(self, lesson: Lesson) -> None:
         self.repo.save(lesson)
 
-    def save_answers(self, concept_id: ConceptId, values: dict[str, str]) -> None:
-        if not self.repo.exists(concept_id):
+    def submit_answers(self, concept_id: ConceptId, values: dict[str, str]) -> None:
+        lesson = self.repo.find_lesson(concept_id)
+        if lesson is None:
             raise LessonNotFound(concept_id.value)
-        self.repo.save_answers(
-            Answers(concept_id=concept_id, submitted_at=_now(), values=values)
-        )
+        answers = lesson.submit_answers(values, datetime.now(timezone.utc))
+        self.repo.save_answers(answers)
 
     def save_result(self, result: Result) -> None:
         if not self.repo.exists(result.concept_id):
@@ -39,19 +35,13 @@ class LessonService:
         return self.repo.list_summaries()
 
     def get(self, concept_id: ConceptId) -> Lesson:
-        """Retrieve by id. Raises LessonNotFound if absent (per project convention:
-        'get' implies existence; use find_* for nullable lookups)."""
         lesson = self.repo.find_lesson(concept_id)
         if lesson is None:
             raise LessonNotFound(concept_id.value)
         return lesson
 
-    def find_answers(self, concept_id: ConceptId) -> Answers | None:
+    def find_answers(self, concept_id: ConceptId):
         return self.repo.find_answers(concept_id)
 
-    def find_result(self, concept_id: ConceptId) -> Result | None:
+    def find_result(self, concept_id: ConceptId):
         return self.repo.find_result(concept_id)
-
-
-def _now() -> datetime:
-    return datetime.now(timezone.utc)

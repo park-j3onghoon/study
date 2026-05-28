@@ -23,9 +23,9 @@ class ReadAnswersTool(Tool):
     def __init__(self, service: LessonService):
         self.service = service
 
-    async def execute(self, input: dict[str, Any]) -> str:
+    async def execute(self, args: dict[str, Any]) -> str:
         try:
-            concept_id = ConceptId(input["concept_id"])
+            concept_id = ConceptId(args["concept_id"])
         except InvalidConceptId as exc:
             return f"Error: {exc}"
         answers = self.service.find_answers(concept_id)

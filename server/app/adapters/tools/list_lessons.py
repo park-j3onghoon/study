@@ -16,7 +16,7 @@ class ListLessonsTool(Tool):
     def __init__(self, service: LessonService):
         self.service = service
 
-    async def execute(self, _input: dict[str, Any]) -> str:
+    async def execute(self, args: dict[str, Any]) -> str:
         summaries = self.service.list_summaries()
         if not summaries:
             return "(no lessons yet)"

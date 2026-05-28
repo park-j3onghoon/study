@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from ...application.lesson_service import LessonService
-from ...domain.exceptions import InvalidConceptId
+from ...domain.exceptions import InvalidConceptId, InvalidQuestion
 from ...domain.models import ConceptId, Lesson, Question
 from ...domain.ports import Tool
 
@@ -48,19 +48,23 @@ class WriteLessonTool(Tool):
     def __init__(self, service: LessonService):
         self.service = service
 
-    async def execute(self, input: dict[str, Any]) -> str:
+    async def execute(self, args: dict[str, Any]) -> str:
         try:
-            concept_id = ConceptId(input["concept_id"])
+            concept_id = ConceptId(args["concept_id"])
         except InvalidConceptId as exc:
+            return f"Error: {exc}"
+        try:
+            questions = tuple(_to_question(q) for q in args["questions"])
+        except InvalidQuestion as exc:
             return f"Error: {exc}"
         lesson = Lesson(
             concept_id=concept_id,
-            title=input["title"],
-            html=input["lesson_html"],
-            questions=tuple(_to_question(q) for q in input["questions"]),
+            title=args["title"],
+            html=args["lesson_html"],
+            questions=questions,
             created=datetime.now(timezone.utc),
-            model=input.get("model"),
-            thinking_budget=input.get("thinking_budget"),
+            model=args.get("model"),
+            thinking_budget=args.get("thinking_budget"),
         )
         self.service.create(lesson)
         return f"Created lesson at lessons/{concept_id.value}/lesson.html ({len(lesson.questions)} questions)."

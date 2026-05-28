@@ -36,7 +36,7 @@ def make_router(service: LessonService) -> APIRouter:
     async def save_answers(concept_id: str, payload: AnswersPayload) -> dict:
         cid = _parse_concept_id(concept_id)
         try:
-            service.save_answers(cid, payload.answers)
+            service.submit_answers(cid, payload.answers)
         except LessonNotFound:
             raise HTTPException(status_code=404, detail=f"Lesson not found: {concept_id}")
         return {"status": "saved", "path": f"lessons/{concept_id}/answers.json"}

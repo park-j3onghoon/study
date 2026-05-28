@@ -15,5 +15,5 @@ class EchoTool(Tool):
         "required": ["text"],
     }
 
-    async def execute(self, input: dict[str, Any]) -> str:
-        return f"echo: {input['text']}"
+    async def execute(self, args: dict[str, Any]) -> str:
+        return f"echo: {args['text']}"

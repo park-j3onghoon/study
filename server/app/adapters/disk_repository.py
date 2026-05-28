@@ -1,13 +1,13 @@
 """Disk-backed LessonRepository. Stores under {root}/{concept_id}/."""
-import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
+from ..domain.exceptions import InvalidConceptId
 from ..domain.models import (
     Answers, ConceptId, Lesson, LessonSummary, Question, QuestionResult, Result,
 )
 from ..domain.ports import LessonRepository
+from . import _jsonio
 
 
 class DiskLessonRepository(LessonRepository):
@@ -18,8 +18,8 @@ class DiskLessonRepository(LessonRepository):
     # ── Commands ────────────────────────────────────────────────────────────
     def save(self, lesson: Lesson) -> None:
         lesson_dir = self._dir(lesson.concept_id)
-        _write_text(lesson_dir / "lesson.html", lesson.html)
-        _write_json(lesson_dir / "meta.json", {
+        _jsonio.write_text(lesson_dir / "lesson.html", lesson.html)
+        _jsonio.write_json(lesson_dir / "meta.json", {
             "concept_id": lesson.concept_id.value,
             "title": lesson.title,
             "created": lesson.created.isoformat(),
@@ -29,13 +29,13 @@ class DiskLessonRepository(LessonRepository):
         })
 
     def save_answers(self, answers: Answers) -> None:
-        _write_json(self._dir(answers.concept_id) / "answers.json", {
+        _jsonio.write_json(self._dir(answers.concept_id) / "answers.json", {
             "submitted_at": answers.submitted_at.isoformat(),
             "answers": answers.values,
         })
 
     def save_result(self, result: Result) -> None:
-        _write_json(self._dir(result.concept_id) / "result.json", {
+        _jsonio.write_json(self._dir(result.concept_id) / "result.json", {
             "graded_at": result.graded_at.isoformat(),
             "score": result.score,
             "by_question": [
@@ -53,11 +53,11 @@ class DiskLessonRepository(LessonRepository):
         html_path = d / "lesson.html"
         if not meta_path.exists() or not html_path.exists():
             return None
-        meta = _read_json(meta_path)
+        meta = _jsonio.read_json(meta_path)
         return Lesson(
             concept_id=concept_id,
             title=meta["title"],
-            html=_read_text(html_path),
+            html=_jsonio.read_text(html_path),
             questions=tuple(_question_from_dict(q) for q in meta["questions"]),
             created=datetime.fromisoformat(meta["created"]),
             model=meta.get("model"),
@@ -68,7 +68,7 @@ class DiskLessonRepository(LessonRepository):
         path = self._dir(concept_id) / "answers.json"
         if not path.exists():
             return None
-        data = _read_json(path)
+        data = _jsonio.read_json(path)
         return Answers(
             concept_id=concept_id,
             submitted_at=datetime.fromisoformat(data["submitted_at"]),
@@ -79,7 +79,7 @@ class DiskLessonRepository(LessonRepository):
         path = self._dir(concept_id) / "result.json"
         if not path.exists():
             return None
-        data = _read_json(path)
+        data = _jsonio.read_json(path)
         return Result(
             concept_id=concept_id,
             graded_at=datetime.fromisoformat(data["graded_at"]),
@@ -97,11 +97,12 @@ class DiskLessonRepository(LessonRepository):
         for d in sorted(self.root.iterdir()):
             if not d.is_dir() or not (d / "meta.json").exists():
                 continue
-            meta = _read_json(d / "meta.json")
+            meta = _jsonio.read_json(d / "meta.json")
             try:
                 cid = ConceptId(meta["concept_id"])
-            except Exception:
-                continue  # 손상된 메타는 건너뛴다 (사이드바가 죽지 않도록)
+            except (InvalidConceptId, KeyError):
+                # 손상된 메타는 건너뛴다 — 사이드바가 죽지 않도록.
+                continue
             summaries.append(LessonSummary(
                 concept_id=cid,
                 title=meta["title"],
@@ -115,25 +116,6 @@ class DiskLessonRepository(LessonRepository):
 
     def _dir(self, concept_id: ConceptId) -> Path:
         return self.root / concept_id.value
-
-
-# ── Helpers (file-private) ────────────────────────────────────────────────────
-def _read_text(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
-
-
-def _write_text(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
-
-
-def _read_json(path: Path) -> Any:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def _write_json(path: Path, data: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def _question_to_dict(q: Question) -> dict:

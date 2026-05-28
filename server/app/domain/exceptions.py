@@ -27,3 +27,7 @@ class ConversationNotFound(DomainException):
     def __init__(self, value: str):
         super().__init__(f"Conversation not found: {value!r}")
         self.value = value
+
+
+class InvalidQuestion(DomainException):
+    """Invariant violation on Question construction."""

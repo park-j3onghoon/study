@@ -15,21 +15,15 @@ class ConversationService:
         self.repo.save(Conversation(
             id=id,
             title=title,
-            created=_now(),
+            created=datetime.now(timezone.utc),
             messages=(),
         ))
 
-    def append_messages(self, id: ConversationId, new_messages: list[dict]) -> None:
+    def add_turn(self, id: ConversationId, user_content: str, assistant_content: str) -> None:
         conv = self.repo.find(id)
         if conv is None:
             raise ConversationNotFound(id.value)
-        updated = Conversation(
-            id=conv.id,
-            title=conv.title,
-            created=conv.created,
-            messages=conv.messages + tuple(new_messages),
-        )
-        self.repo.save(updated)
+        self.repo.save(conv.add_turn(user_content, assistant_content))
 
     # ── Queries ─────────────────────────────────────────────────────────────
     def get(self, id: ConversationId) -> Conversation:
@@ -43,7 +37,3 @@ class ConversationService:
 
     def list_summaries(self) -> list[ConversationSummary]:
         return self.repo.list_summaries()
-
-
-def _now() -> datetime:
-    return datetime.now(timezone.utc)

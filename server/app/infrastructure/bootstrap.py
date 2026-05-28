@@ -57,7 +57,7 @@ def build() -> AppState:
         max_iterations=settings.max_tool_iterations,
         max_response_tokens=settings.max_response_tokens,
     )
-    chat_service = ChatService(agent, conversation_service)
+    chat_service = ChatService(agent)
     event_stream = FileEventStream(lessons_path)
     return AppState(
         lesson_service=lesson_service,

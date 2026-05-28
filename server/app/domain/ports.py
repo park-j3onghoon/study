@@ -53,7 +53,7 @@ class Tool(ABC):
     input_schema: dict
 
     @abstractmethod
-    async def execute(self, input: dict[str, Any]) -> str: ...
+    async def execute(self, args: dict[str, Any]) -> str: ...
 
 
 class Agent(ABC):
