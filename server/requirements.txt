@@ -1,6 +1,6 @@
 fastapi>=0.115
 uvicorn[standard]>=0.30
-anthropic>=0.40
+claude-agent-sdk>=0.2
 pydantic>=2.7
 pydantic-settings>=2.4
 watchfiles>=0.21

@@ -1,4 +1,10 @@
 """FastAPI app entry. Wires composition root → routes → static files."""
+import os
+
+# Force the Claude Code CLI subprocess to use Max OAuth, not a stale ANTHROPIC_API_KEY
+# inherited from the shell. We migrated to Claude Max billing — API key path is dead.
+os.environ.pop("ANTHROPIC_API_KEY", None)
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -6,7 +12,7 @@ from .infrastructure.bootstrap import build
 from .interface.routes import chat, conversations, events, lessons, models
 
 
-app = FastAPI(title="Study Learning App", version="0.4.0")
+app = FastAPI(title="Study Learning App", version="0.5.0")
 
 _state = build()
 app.include_router(

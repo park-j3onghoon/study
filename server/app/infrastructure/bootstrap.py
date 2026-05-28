@@ -5,11 +5,11 @@ Adding a new repository: instantiate it instead of DiskLessonRepository.
 """
 from pathlib import Path
 
-from ..adapters.anthropic_agent import AnthropicAgent
-from ..adapters.anthropic_model_catalog import AnthropicModelCatalog
+from ..adapters.claude_sdk_agent import ClaudeSDKAgent
 from ..adapters.disk_conversation_repository import DiskConversationRepository
 from ..adapters.disk_repository import DiskLessonRepository
 from ..adapters.file_event_stream import FileEventStream
+from ..adapters.static_model_catalog import StaticModelCatalog
 from ..adapters.tools.echo import EchoTool
 from ..adapters.tools.grade_lesson import GradeLessonTool
 from ..adapters.tools.list_lessons import ListLessonsTool
@@ -53,18 +53,15 @@ def build() -> AppState:
         GradeLessonTool(lesson_service),
         ListLessonsTool(lesson_service),
     ]
-    agent = AnthropicAgent(
-        api_key=settings.anthropic_api_key,
+    agent = ClaudeSDKAgent(
+        tools=tools,
+        system_prompt=settings.system_prompt,
         default_model=settings.default_model,
         default_thinking_budget=settings.default_thinking_budget,
-        tools=tools,
-        max_iterations=settings.max_tool_iterations,
-        max_response_tokens=settings.max_response_tokens,
     )
     chat_service = ChatService(agent)
     event_stream = FileEventStream(lessons_path)
-    model_catalog = AnthropicModelCatalog(api_key=settings.anthropic_api_key)
-    model_service = ModelService(model_catalog)
+    model_service = ModelService(StaticModelCatalog())
     return AppState(
         lesson_service=lesson_service,
         chat_service=chat_service,
