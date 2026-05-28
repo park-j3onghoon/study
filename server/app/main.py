@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from .infrastructure.bootstrap import build
-from .interface.routes import chat, conversations, events, lessons
+from .interface.routes import chat, conversations, events, lessons, models
 
 
 app = FastAPI(title="Study Learning App", version="0.4.0")
@@ -16,5 +16,6 @@ app.include_router(
 app.include_router(lessons.make_router(_state.lesson_service), prefix="/api")
 app.include_router(conversations.make_router(_state.conversation_service), prefix="/api")
 app.include_router(events.make_router(_state.event_stream), prefix="/api")
+app.include_router(models.make_router(_state.model_service), prefix="/api")
 # /api routes match first; static catch-all is mounted last.
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

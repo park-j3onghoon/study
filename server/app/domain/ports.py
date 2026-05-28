@@ -12,7 +12,7 @@ from typing import Any, AsyncIterator
 
 from .models import (
     Answers, ConceptId, Conversation, ConversationId, ConversationSummary,
-    Lesson, LessonSummary, Result,
+    Lesson, LessonSummary, ModelInfo, Result,
 )
 
 
@@ -73,6 +73,13 @@ class EventStream(ABC):
 
     @abstractmethod
     async def watch(self) -> AsyncIterator[dict]: ...
+
+
+class ModelCatalog(ABC):
+    """Lookup of models available to the agent. Adapter (e.g. Anthropic) fulfills this."""
+
+    @abstractmethod
+    async def list_available(self) -> list[ModelInfo]: ...
 
 
 class ConversationRepository(ABC):

@@ -6,6 +6,7 @@ Adding a new repository: instantiate it instead of DiskLessonRepository.
 from pathlib import Path
 
 from ..adapters.anthropic_agent import AnthropicAgent
+from ..adapters.anthropic_model_catalog import AnthropicModelCatalog
 from ..adapters.disk_conversation_repository import DiskConversationRepository
 from ..adapters.disk_repository import DiskLessonRepository
 from ..adapters.file_event_stream import FileEventStream
@@ -17,6 +18,7 @@ from ..adapters.tools.write_lesson import WriteLessonTool
 from ..application.chat_service import ChatService
 from ..application.conversation_service import ConversationService
 from ..application.lesson_service import LessonService
+from ..application.model_service import ModelService
 from ..domain.ports import EventStream
 from .config import settings
 
@@ -28,11 +30,13 @@ class AppState:
         chat_service: ChatService,
         conversation_service: ConversationService,
         event_stream: EventStream,
+        model_service: ModelService,
     ):
         self.lesson_service = lesson_service
         self.chat_service = chat_service
         self.conversation_service = conversation_service
         self.event_stream = event_stream
+        self.model_service = model_service
 
 
 def build() -> AppState:
@@ -59,9 +63,12 @@ def build() -> AppState:
     )
     chat_service = ChatService(agent)
     event_stream = FileEventStream(lessons_path)
+    model_catalog = AnthropicModelCatalog(api_key=settings.anthropic_api_key)
+    model_service = ModelService(model_catalog)
     return AppState(
         lesson_service=lesson_service,
         chat_service=chat_service,
         conversation_service=conversation_service,
         event_stream=event_stream,
+        model_service=model_service,
     )

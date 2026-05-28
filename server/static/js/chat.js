@@ -1,6 +1,6 @@
 // SSE-streaming chat. Wires assistant text/thinking/tool events into the DOM live.
 // conversation_id is persisted in localStorage so chat continues across reloads.
-import { chatStream, createConversation, getConversation } from "/js/api.js";
+import { chatStream, createConversation, getConversation, listModels } from "/js/api.js";
 
 const LS_KEY = "study.conversation_id";
 
@@ -26,7 +26,27 @@ export function init(opts) {
     }
   });
 
+  populateModels();
   restoreConversation();
+}
+
+async function populateModels() {
+  try {
+    const models = await listModels();
+    if (!models.length) return;
+    modelEl.innerHTML = "";
+    for (const m of models) {
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = m.display_name;
+      modelEl.appendChild(opt);
+    }
+    // Server already orders best-family first → first option is the default.
+    modelEl.value = models[0].id;
+  } catch (err) {
+    // 503 등은 그냥 무시 — index.html의 기본 옵션이 fallback으로 남는다.
+    console.warn("listModels failed, keeping defaults:", err.message);
+  }
 }
 
 async function restoreConversation() {

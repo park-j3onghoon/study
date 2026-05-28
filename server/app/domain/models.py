@@ -156,3 +156,14 @@ class ConversationSummary:
     message_count: int
 
 
+@dataclass(frozen=True)
+class ModelInfo:
+    """A model available to the agent. Provider-agnostic value object.
+    `family` is set by the adapter (e.g. "opus"/"sonnet"/"haiku"/"other") so the
+    domain can rank without knowing Anthropic naming."""
+    id: str
+    display_name: str
+    family: str
+    created_at: datetime
+
+

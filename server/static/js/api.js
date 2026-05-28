@@ -51,6 +51,10 @@ export async function getConversation(id) {
   return r.json();
 }
 
+export function listModels() {
+  return fetchJson("/api/models");
+}
+
 // SSE chat stream.
 // callbacks: { thinking_start, thinking_delta, thinking_stop, text_delta,
 //              tool_use_start, tool_use_complete, message_stop, error, unknown }

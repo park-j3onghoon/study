@@ -12,8 +12,10 @@ from app.adapters.disk_repository import DiskLessonRepository
 from app.application.chat_service import ChatService
 from app.application.conversation_service import ConversationService
 from app.application.lesson_service import LessonService
-from app.domain.ports import EventStream
-from app.interface.routes import chat, conversations, events, lessons
+from app.application.model_service import ModelService
+from app.domain.models import ModelInfo
+from app.domain.ports import EventStream, ModelCatalog
+from app.interface.routes import chat, conversations, events, lessons, models
 
 from .conftest import StubAgent
 
@@ -24,6 +26,19 @@ class _NoopEventStream(EventStream):
             yield {}
 
 
+class _StubCatalog(ModelCatalog):
+    def __init__(self, models):
+        self.models = models
+
+    async def list_available(self):
+        return list(self.models)
+
+
+def _now_utc():
+    from datetime import datetime, timezone
+    return datetime(2026, 1, 1, tzinfo=timezone.utc)
+
+
 @pytest.fixture
 def client(tmp_path: Path):
     lesson_svc = LessonService(DiskLessonRepository(tmp_path / "lessons"))
@@ -32,11 +47,18 @@ def client(tmp_path: Path):
         {"type": "text_delta", "text": "ok"},
         {"type": "message_stop", "stop_reason": "end_turn"},
     ]))
+    model_svc = ModelService(_StubCatalog([
+        ModelInfo(id="claude-opus-test", display_name="Opus Test",
+                  family="opus", created_at=_now_utc()),
+        ModelInfo(id="claude-haiku-test", display_name="Haiku Test",
+                  family="haiku", created_at=_now_utc()),
+    ]))
     app = FastAPI()
     app.include_router(chat.make_router(chat_svc, conv_svc), prefix="/api")
     app.include_router(lessons.make_router(lesson_svc), prefix="/api")
     app.include_router(conversations.make_router(conv_svc), prefix="/api")
     app.include_router(events.make_router(_NoopEventStream()), prefix="/api")
+    app.include_router(models.make_router(model_svc), prefix="/api")
     return TestClient(app)
 
 
@@ -111,3 +133,12 @@ def test_lesson_submit_answers_flow(client, sample_lesson, tmp_path):
     detail = client.get(f"/api/lessons/{cid}").json()
     assert detail["title"] == sample_lesson.title
     assert len(detail["questions"]) == 2
+
+
+def test_models_returns_latest_per_family(client):
+    r = client.get("/api/models")
+    assert r.status_code == 200
+    payload = r.json()
+    families = [m["family"] for m in payload]
+    assert families == ["opus", "haiku"]  # opus first (best tier)
+    assert payload[0]["id"] == "claude-opus-test"

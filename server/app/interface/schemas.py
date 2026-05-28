@@ -69,3 +69,10 @@ class ResultDTO(BaseModel):
     by_question: list[QuestionResultDTO]
     weakness_tags: list[str] = []
     recommendation: str = ""
+
+
+class ModelDTO(BaseModel):
+    id: str
+    display_name: str
+    family: str
+    created_at: str
