@@ -15,7 +15,7 @@ app/
 │   └── chat_service.py
 ├── adapters/            # 외부 시스템 — domain 의존
 │   ├── disk_repository.py   # LessonRepository 구현
-│   ├── anthropic_agent.py   # Agent 구현 (Anthropic SDK 직접 의존)
+│   ├── claude_sdk_agent.py   # Agent 구현 (claude-agent-sdk / Claude Max OAuth)
 │   └── tools/               # 각 Tool은 lesson_service에 위임
 ├── interface/           # FastAPI 라우터 + DTO
 │   ├── routes/{chat,lessons}.py
@@ -36,9 +36,16 @@ cd ~/git/study/server
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env       # ANTHROPIC_API_KEY 채움
+
+# Claude Max(OAuth)로 동작 — API 키 불필요.
+# 그 머신에 Claude Code CLI(claude)가 설치+로그인돼 있어야 한다
+# (claude-agent-sdk가 claude CLI를 서브프로세스로 실행).
+claude login               # Max 구독 OAuth 로그인
+
 ./start.sh                 # localhost:9999
 ```
+
+> **인증**: `main.py`가 시작 시 `ANTHROPIC_API_KEY`를 pop하여 API 키 결제 경로를 끊고 **Claude Max OAuth**를 강제한다. `.env`는 선택(없어도 `config.py` 기본값으로 동작). 새 머신은 `pip install` + `claude login`이면 충분하다.
 
 ## 새 도구 추가하기
 
@@ -83,10 +90,9 @@ cp .env.example .env       # ANTHROPIC_API_KEY 채움
 
 ## Phase 진행 상황
 
-- ✅ P1 백엔드 스켈레톤
-- ✅ P2 핵심 도구 4개 + REST 라우터
-- ✅ P3 프론트엔드 기본 (사이드바·학습지·채팅)
-- ✅ P4 SSE 스트리밍 + thinking 인디케이터
-- ✅ P5 클린 아키텍처 리팩토링 + iframe raw_html (same-origin)
-- ⏳ P6 라이브 인디케이터 + 파일 watch
-- ⏳ P7 채팅 히스토리 + 추가 학습지 자동 제안
+- ✅ P1~P7 백엔드·프론트·SSE·클린 아키텍처·채팅 히스토리
+- ✅ P8 아키텍처 문서화 + pytest
+- ✅ P9 모델 자동 fetch → P10에서 StaticModelCatalog로 전환
+- ✅ P10 claude-agent-sdk 마이그레이션 (Anthropic API 키 → **Claude Max OAuth**)
+- ✅ 퀴즈 8~12문항 증량, chat 하단 재배치 (UI 개편)
+- ⏳ Focus 모드 / 학습 완료 신호
