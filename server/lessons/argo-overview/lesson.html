@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Argo — 4총사 한눈에 보기</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a1a;
+    --muted: #555;
+    --card: #f6f7f9;
+    --border: #e2e4e8;
+    --accent: #ef7b4d;
+    --accent-bg: #fff1e8;
+    --code-bg: #f0f2f5;
+    --th-bg: #eef0f3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a;
+      --fg: #e6e8ec;
+      --muted: #9aa0a8;
+      --card: #1c1f25;
+      --border: #2a2e35;
+      --accent: #ff8a5b;
+      --accent-bg: #2a1d16;
+      --code-bg: #1f2229;
+      --th-bg: #232730;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 80px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.7;
+    max-width: 820px;
+    margin-inline: auto;
+  }
+  h1 { font-size: 1.7rem; margin-top: 0; }
+  h2 { font-size: 1.25rem; margin-top: 2.2rem; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 1.05rem; margin-top: 1.6rem; }
+  p, li { color: var(--fg); }
+  code {
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.92em;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+  }
+  pre {
+    background: var(--code-bg);
+    padding: 12px 14px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.88em;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.95em;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--th-bg); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 14px 0;
+  }
+  .tip {
+    background: var(--accent-bg);
+    border-left: 4px solid var(--accent);
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin: 14px 0;
+  }
+  svg { max-width: 100%; height: auto; display: block; margin: 12px auto; }
+  form { margin-top: 28px; }
+  .q {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .q label.opt { display: block; margin: 4px 0; cursor: pointer; }
+  .q input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--fg);
+    font-size: 0.95rem;
+    margin-top: 6px;
+  }
+  button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .status { margin-top: 12px; font-size: 0.95rem; color: var(--muted); }
+  .pill {
+    display: inline-block;
+    font-size: 0.78em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    margin-right: 6px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Argo — 4총사 한눈에 보기</h1>
+<p style="color: var(--muted);">"Argo"는 단일 도구가 아니라 <b>Argo Project</b>라는 CNCF Graduated 프로젝트의 <b>우산 이름</b>입니다. 안에 도구가 4개 있어요. 맥락 없이 "Argo"만 들으면 어떤 걸 말하는지 모호하기 때문에, 먼저 4총사를 구분하고 가장 흔히 쓰이는 <b>Argo CD</b>에 초점을 맞춥니다.</p>
+
+<h2>Step 1. 왜 4개로 나뉘었나</h2>
+<p>각각 다른 시기에 다른 문제를 풀려고 나온 도구들입니다. 처음부터 한 덩어리로 설계된 게 아니라, 운영 경험이 쌓이며 별도 도구로 분리되었습니다.</p>
+
+<ul>
+  <li><b>Argo Workflows (2017, Intuit)</b> — "K8s 위에서 ML/데이터 파이프라인 돌리고 싶다" 가 출발점.</li>
+  <li><b>Argo CD</b> — Workflows 운영 경험에서 "배포 자체도 declarative + K8s-native로 하자" → 분리.</li>
+  <li><b>Argo Rollouts</b> — K8s 기본 <code>Deployment</code> 리소스로는 Canary·Blue-Green이 표현 불가 → 분리.</li>
+  <li><b>Argo Events</b> — 이벤트 기반 트리거(Webhook·Kafka·S3)는 Workflows에 묶기엔 너무 범용 → 분리.</li>
+</ul>
+
+<div class="tip">
+  <b>핵심 포인트:</b> 4개를 다 써야 하는 게 아니라, <b>필요한 것만 골라 쓴다.</b> 가장 단독 사용 비율이 높은 건 <b>Argo CD</b>입니다.
+</div>
+
+<h2>Step 2. 4총사 비교표</h2>
+<table>
+  <thead>
+    <tr><th>도구</th><th>한 줄 정의</th><th>비유</th><th>대체재</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>Argo CD</b></td>
+      <td>Git 저장소가 K8s 클러스터 상태의 <b>single source of truth (SoT)</b>. Git에 yaml 푸시 → 클러스터가 그 상태로 수렴</td>
+      <td>도면(Git)을 보고 건물(클러스터)을 계속 도면과 맞춰주는 감독관</td>
+      <td>Flux CD, Spinnaker</td>
+    </tr>
+    <tr>
+      <td><b>Argo Workflows</b></td>
+      <td>K8s 위에서 도는 컨테이너 기반 <b>워크플로우 엔진</b> (DAG·step 정의, 각 step = Pod)</td>
+      <td>Airflow의 K8s-native 버전</td>
+      <td>Airflow, Tekton, Prefect</td>
+    </tr>
+    <tr>
+      <td><b>Argo Rollouts</b></td>
+      <td>K8s <code>Deployment</code> 상위 호환. <b>Canary · Blue-Green · 점진적 트래픽 이동</b> 지원</td>
+      <td>Deployment는 "올 오어 낫싱", Rollouts는 "10% → 50% → 100%, 메트릭 보며 결정"</td>
+      <td>Flagger</td>
+    </tr>
+    <tr>
+      <td><b>Argo Events</b></td>
+      <td>외부 이벤트(Webhook · Kafka · S3 등) → K8s 안의 트리거 (예: Workflows 시작)</td>
+      <td>외부에서 일어난 일이 K8s 안 워크플로우를 깨우는 초인종</td>
+      <td>Knative Eventing</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Step 3. 그림으로 보기</h2>
+<svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Argo 4총사 위치 도식">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#ef7b4d"/>
+    </marker>
+  </defs>
+  <!-- Git -->
+  <rect x="20" y="130" width="120" height="60" rx="10" fill="#fff1e8" stroke="#ef7b4d" stroke-width="2"/>
+  <text x="80" y="155" text-anchor="middle" font-size="14" font-weight="bold" fill="#1a1a1a">Git Repo</text>
+  <text x="80" y="175" text-anchor="middle" font-size="11" fill="#555">(yaml = SoT)</text>
+
+  <!-- Argo CD -->
+  <rect x="200" y="130" width="130" height="60" rx="10" fill="#e8f4ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="265" y="155" text-anchor="middle" font-size="14" font-weight="bold" fill="#1a1a1a">Argo CD</text>
+  <text x="265" y="175" text-anchor="middle" font-size="11" fill="#555">동기화 감독관</text>
+
+  <!-- K8s Cluster box -->
+  <rect x="380" y="40" width="320" height="240" rx="14" fill="none" stroke="#9aa0a8" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="540" y="60" text-anchor="middle" font-size="13" font-weight="bold" fill="#9aa0a8">Kubernetes Cluster</text>
+
+  <!-- Rollouts -->
+  <rect x="410" y="80" width="120" height="50" rx="8" fill="#e8ffe8" stroke="#22a722" stroke-width="2"/>
+  <text x="470" y="100" text-anchor="middle" font-size="13" font-weight="bold">Argo Rollouts</text>
+  <text x="470" y="118" text-anchor="middle" font-size="11" fill="#555">Canary/BG</text>
+
+  <!-- Workflows -->
+  <rect x="550" y="80" width="120" height="50" rx="8" fill="#f0e8ff" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="610" y="100" text-anchor="middle" font-size="13" font-weight="bold">Argo Workflows</text>
+  <text x="610" y="118" text-anchor="middle" font-size="11" fill="#555">DAG / pipeline</text>
+
+  <!-- Events -->
+  <rect x="410" y="180" width="260" height="50" rx="8" fill="#fff8e0" stroke="#d4a017" stroke-width="2"/>
+  <text x="540" y="200" text-anchor="middle" font-size="13" font-weight="bold">Argo Events</text>
+  <text x="540" y="218" text-anchor="middle" font-size="11" fill="#555">Webhook / Kafka / S3 → 트리거</text>
+
+  <!-- Arrows -->
+  <line x1="140" y1="160" x2="195" y2="160" stroke="#ef7b4d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="330" y1="160" x2="405" y2="105" stroke="#ef7b4d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="330" y1="160" x2="405" y2="205" stroke="#ef7b4d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="540" y1="180" x2="610" y2="135" stroke="#ef7b4d" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>
+<p style="text-align:center; color: var(--muted); font-size: 0.9em;">Git → Argo CD → 클러스터 상태 동기화. Rollouts·Workflows는 클러스터 안 리소스, Events는 외부 이벤트의 진입 게이트.</p>
+
+<h2>Step 4. 가장 흔한 시나리오 — Argo CD (GitOps)</h2>
+<div class="card">
+  <p><b>GitOps</b> = "Git이 단일 진실의 원천(SoT)이고, 실제 시스템 상태는 Git에 맞춰 자동으로 수렴한다"는 운영 방식입니다.</p>
+  <ol>
+    <li>개발자가 <code>deployment.yaml</code> 의 image tag를 <code>v1.2.3</code> 으로 바꿔 Git에 push</li>
+    <li>Argo CD가 Git을 polling (또는 webhook으로 감지)</li>
+    <li>현재 클러스터 상태 ≠ Git 상태 → <b>OutOfSync</b> 감지</li>
+    <li><code>auto-sync</code> 설정이면 자동으로, 아니면 사람이 "Sync" 버튼 → 클러스터에 apply</li>
+    <li>이후에도 누가 <code>kubectl edit</code>로 클러스터를 직접 바꾸면 Argo CD가 <b>다시 Git 상태로 되돌림</b> (self-heal)</li>
+  </ol>
+</div>
+
+<h3>왜 "그냥 kubectl apply"가 아니라 Argo CD인가?</h3>
+<table>
+  <thead><tr><th>관점</th><th>kubectl apply (CI에서 직접)</th><th>Argo CD (Pull 방식)</th></tr></thead>
+  <tbody>
+    <tr><td>권한</td><td>CI가 클러스터 자격증명 보유 (외부에 클러스터 노출)</td><td>클러스터 내부 Argo CD가 Git을 pull (자격증명이 클러스터 밖으로 안 나감)</td></tr>
+    <tr><td>드리프트</td><td>누가 손으로 바꿔도 모름</td><td>Git과 다르면 즉시 감지·복구</td></tr>
+    <tr><td>롤백</td><td>이전 CI 잡 다시 돌려야 함</td><td>Git revert 하나로 끝</td></tr>
+    <tr><td>감사(audit)</td><td>CI 로그 뒤져야 함</td><td>Git 커밋 히스토리 = 변경 이력</td></tr>
+  </tbody>
+</table>
+
+<h2>Step 5. 흔한 오해</h2>
+<ul>
+  <li><span class="pill">오해</span> "Argo = CI/CD" → ❌. Argo CD는 <b>CD만</b>입니다. CI(빌드·테스트)는 GitHub Actions, Jenkins 같은 별도 도구가 담당. (Argo Workflows를 CI 용도로 쓸 수는 있지만 일반적이지 않음.)</li>
+  <li><span class="pill">오해</span> "Argo Workflows = Argo CD의 일부" → ❌. 완전히 별개 도구. 같이 안 써도 됨.</li>
+  <li><span class="pill">오해</span> "Argo Rollouts는 Argo CD가 있어야 동작" → ❌. 단독으로도 됨. 다만 GitOps와 같이 쓰면 시너지가 큼.</li>
+  <li><span class="pill">오해</span> "K8s를 안 쓰면 Argo도 쓸 수 있다" → ❌. 4개 모두 <b>K8s 전제</b>. K8s 위에서만 동작합니다.</li>
+</ul>
+
+<h2>Step 6. 한 줄 정리</h2>
+<div class="tip">
+  <b>Argo</b>는 K8s 위에서 "선언적(declarative) 운영"을 밀어붙이는 4개 도구의 묶음.<br>
+  - <b>CD</b>는 <b>상태 동기화</b><br>
+  - <b>Workflows</b>는 <b>작업 실행</b><br>
+  - <b>Rollouts</b>는 <b>점진적 배포</b><br>
+  - <b>Events</b>는 <b>외부 트리거</b><br>
+  각각이 푸는 문제가 달라서 분리되어 있고, 필요한 것만 골라 씁니다.
+</div>
+
+<form id="answer-form">
+  <h2>확인 문제</h2>
+
+  <div class="q">
+    <p><b>Q1.</b> DevOps 엔지니어가 그냥 "Argo"라고만 말했을 때 가장 흔히 가리키는 도구는?</p>
+    <label class="opt"><input type="radio" name="q1" value="Argo CD"> Argo CD</label>
+    <label class="opt"><input type="radio" name="q1" value="Argo Workflows"> Argo Workflows</label>
+    <label class="opt"><input type="radio" name="q1" value="Argo Rollouts"> Argo Rollouts</label>
+    <label class="opt"><input type="radio" name="q1" value="Argo Events"> Argo Events</label>
+  </div>
+
+  <div class="q">
+    <p><b>Q2.</b> Git에 yaml을 푸시하면 K8s 클러스터가 그 상태로 수렴하도록 계속 맞춰주는 도구는?</p>
+    <label class="opt"><input type="radio" name="q2" value="Argo CD"> Argo CD</label>
+    <label class="opt"><input type="radio" name="q2" value="Argo Workflows"> Argo Workflows</label>
+    <label class="opt"><input type="radio" name="q2" value="Argo Rollouts"> Argo Rollouts</label>
+    <label class="opt"><input type="radio" name="q2" value="Argo Events"> Argo Events</label>
+  </div>
+
+  <div class="q">
+    <p><b>Q3.</b> K8s 기본 Deployment 리소스로는 표현하기 어려운 "Canary 10% → 50% → 100%" 점진적 배포를 담당하는 도구는?</p>
+    <label class="opt"><input type="radio" name="q3" value="Argo CD"> Argo CD</label>
+    <label class="opt"><input type="radio" name="q3" value="Argo Workflows"> Argo Workflows</label>
+    <label class="opt"><input type="radio" name="q3" value="Argo Rollouts"> Argo Rollouts</label>
+    <label class="opt"><input type="radio" name="q3" value="Argo Events"> Argo Events</label>
+  </div>
+
+  <div class="q">
+    <p><b>Q4.</b> Argo Workflows를 한 줄로 정의하고, 비슷한 역할을 하는 K8s 외부 도구를 하나 적어보세요.</p>
+    <input type="text" name="q4" placeholder="예: ____는 ____. 비슷한 도구: ____">
+  </div>
+
+  <div class="q">
+    <p><b>Q5.</b> 왜 Argo Project는 한 도구로 합치지 않고 CD / Workflows / Rollouts / Events 4개로 나뉘어 있는지 본인 말로 1~2문장으로 설명해보세요.</p>
+    <input type="text" name="q5" placeholder="자유 서술">
+  </div>
+
+  <button type="submit" id="submit-btn">제출하기</button>
+  <div class="status" id="status"></div>
+</form>
+
+<script>
+  const CONCEPT_ID = "argo-overview";
+  const form = document.getElementById("answer-form");
+  const statusEl = document.getElementById("status");
+  const btn = document.getElementById("submit-btn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    statusEl.textContent = "제출 중...";
+
+    const fd = new FormData(form);
+    const answers = {};
+    for (const [k, v] of fd.entries()) answers[k] = v;
+
+    try {
+      const res = await fetch(`/api/lessons/${CONCEPT_ID}/answers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ answers }),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      statusEl.textContent = "✅ 제출 완료! 채팅으로 돌아가 '채점해줘'라고 말씀해주세요.";
+    } catch (err) {
+      statusEl.textContent = "❌ 제출 실패: " + err.message;
+      btn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>

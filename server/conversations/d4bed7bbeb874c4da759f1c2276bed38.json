@@ -1,0 +1,23 @@
+{
+  "id": "d4bed7bbeb874c4da759f1c2276bed38",
+  "title": "Argo 공부할래",
+  "created": "2026-05-28T09:18:06.268005+00:00",
+  "messages": [
+    {
+      "role": "user",
+      "content": "argo가 뭐야"
+    },
+    {
+      "role": "assistant",
+      "content": "# Step 1. Explain — Argo (umbrella)\n\n## Argo가 모호한 이유\n\n\"Argo\"라고만 하면 보통 **Argo Project** (CNCF Graduated 프로젝트)를 가리키는데, 이 안에 도구가 4개 있다. 그래서 맥락 없이는 어떤 걸 묻는지 알기 어렵다.\n\n## Argo Project 4총사\n\n| 도구 | 한 줄 정의 | 비유 |\n|---|---|---|\n| **Argo CD** | Git 저장소 = K8s 클러스터 상태의 single source of truth (SoT). Git에 yaml 푸시 → 클러스터가 그 상태로 수렴 | \"도면(Git)을 보고 건물(클러스터)을 계속 도면과 똑같이 맞춰주는 감독관\" |\n| **Argo Workflows** | K8s 위에서 도는 컨테이너 기반 워크플로우 엔진 (DAG·step 정의) | Airflow의 K8s-native 버전. 각 step이 Pod |\n| **Argo Rollouts** | K8s Deployment의 상위 호환. Canary·Blue-Green·점진적 트래픽 이동 지원 | Deployment는 \"올 오어 낫싱\", Rollouts는 \"10% → 50% → 100%로 천천히 밀어보고 메트릭 보면서 결정\" |\n| **Argo Events** | 외부 이벤트(웹훅·Kafka·S3 등) → K8s 안의 트리거 (Workflows 시작 등) | \"외부에서 무언가 일어나면 K8s 안 워크플로우를 깨우는 초인종\" |\n\n## 왜 이렇게 나뉘었나\n\n- 원래 Argo Workflows가 먼저 (2017, Intuit). \"K8s 위에서 ML/데이터 파이프라인 돌리고 싶다\"는 수요.\n- 그 운영 경험에서 \"배포 자체도 같은 철학(declarative + K8s-native)으로 하자\"가 나와 **Argo CD** 분리.\n- Canary 배포는 Deployment 리소스의 능력 밖이라 **Argo Rollouts**가 별도로 분리.\n- 이벤트 기반 트리거는 Workflows에 묶기엔 너무 범용이라 **Argo Events**로 분리.\n- → **4개를 다 쓸 수도, 하나만 골라 쓸 수도 있다.** 가장 흔히 단독으로 쓰이는 건 Argo CD.\n\n## 실무에서 그냥 \"Argo\"라고 하면\n\n대화 맥락에 따라 다르다:\n- DevOps·플랫폼 팀이 \"Argo 봤어?\" → 보통 **Argo CD** (GitOps 도구로 가장 유명)\n- ML/데이터 팀 → 보통 **Argo Workflows**\n- SRE·배포 자동화 → 가끔 **Argo Rollouts**\n\n---\n\n## 확인 1문항\n\n어떤 Argo가 궁금하세요? (가장 흔한 건 Argo CD)선택하시면 그 도구로 들어가서 **Step 1.5 Sketch (HTML 다이어그램) → Q&A** 순으로 진행할게요. 그냥 \"CD\"라고 답해주셔도 됩니다."
+    },
+    {
+      "role": "user",
+      "content": "argo가 뭐야?"
+    },
+    {
+      "role": "assistant",
+      "content": "Argo 학습지를 만들었습니다. 좌측 사이드바에서 선택해 학습하세요."
+    }
+  ]
+}

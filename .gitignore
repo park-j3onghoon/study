@@ -8,6 +8,6 @@ __pycache__/
 *.pyo
 .venv/
 server/.venv/
-server/conversations/
-server/lessons/
+
+# server/lessons·conversations 는 학습 기록을 머신 간 동기화하려고 의도적으로 추적(gitignore 안 함).
 

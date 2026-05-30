@@ -1,0 +1,74 @@
+{
+  "concept_id": "argo-overview",
+  "title": "Argo — 4총사 한눈에 보기",
+  "created": "2026-05-28T12:08:51.752043+00:00",
+  "model": null,
+  "thinking_budget": null,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": "DevOps 엔지니어가 그냥 'Argo'라고만 말했을 때 가장 흔히 가리키는 도구는?",
+      "options": [
+        "Argo CD",
+        "Argo Workflows",
+        "Argo Rollouts",
+        "Argo Events"
+      ],
+      "correct": "Argo CD",
+      "expected_keywords": null
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": "Git에 yaml을 푸시하면 K8s 클러스터가 그 상태로 수렴하도록 계속 맞춰주는 도구는?",
+      "options": [
+        "Argo CD",
+        "Argo Workflows",
+        "Argo Rollouts",
+        "Argo Events"
+      ],
+      "correct": "Argo CD",
+      "expected_keywords": null
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": "K8s 기본 Deployment 리소스로는 표현하기 어려운 'Canary 10% → 50% → 100%' 점진적 배포를 담당하는 도구는?",
+      "options": [
+        "Argo CD",
+        "Argo Workflows",
+        "Argo Rollouts",
+        "Argo Events"
+      ],
+      "correct": "Argo Rollouts",
+      "expected_keywords": null
+    },
+    {
+      "id": "q4",
+      "type": "short_answer",
+      "prompt": "Argo Workflows를 한 줄로 정의하고, 비슷한 역할을 하는 K8s 외부 도구를 하나 적어보세요.",
+      "options": null,
+      "correct": null,
+      "expected_keywords": [
+        "워크플로우",
+        "DAG",
+        "Pod",
+        "Airflow"
+      ]
+    },
+    {
+      "id": "q5",
+      "type": "short_answer",
+      "prompt": "왜 Argo Project는 한 도구로 합치지 않고 CD / Workflows / Rollouts / Events 4개로 나뉘어 있는지 본인 말로 1~2문장으로 설명해보세요.",
+      "options": null,
+      "correct": null,
+      "expected_keywords": [
+        "관심사 분리",
+        "독립",
+        "선택",
+        "역할"
+      ]
+    }
+  ]
+}
