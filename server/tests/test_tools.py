@@ -4,9 +4,10 @@ from dataclasses import replace
 import pytest
 
 from app.adapters.tools.list_lessons import ListLessonsTool
+from app.adapters.tools.read_lesson import ReadLessonTool
 from app.adapters.tools.write_lesson import WriteLessonTool
 from app.application.lesson_service import LessonService
-from app.domain.models import ConceptId
+from app.domain.models import ConceptId, Result
 
 
 _VALID_HTML = "<!DOCTYPE html><html><body>hi</body></html>"
@@ -51,6 +52,13 @@ class TestWriteLessonSuccess:
         # Falsy parent_id ("") must behave like omission, not an invalid-id error.
         await write_tool.execute(_args(parent_id=""))
         assert tmp_lessons_repo.find_lesson(ConceptId("rfc-3986")).parent_id is None
+
+    async def test_focus_flag_is_accepted_and_ignored_by_execute(self, write_tool, tmp_lessons_repo):
+        # focus is consumed at the agent layer (claude_sdk_agent), not here — execute must
+        # accept it without error and persist the lesson normally.
+        out = await write_tool.execute(_args(focus=True))
+        assert out.startswith("Created")
+        assert tmp_lessons_repo.find_lesson(ConceptId("rfc-3986")) is not None
 
 
 class TestWriteLessonRejection:
@@ -104,3 +112,47 @@ class TestListLessonsTool:
         tmp_lessons_repo.save(child)
         out = await ListLessonsTool(LessonService(tmp_lessons_repo)).execute({})
         assert f"parent={sample_lesson.concept_id.value}" in out
+
+
+class TestReadLessonTool:
+    @pytest.fixture
+    def read_tool(self, tmp_lessons_repo):
+        return ReadLessonTool(LessonService(tmp_lessons_repo))
+
+    async def test_existing_lesson_returns_metadata_and_html(self, read_tool, tmp_lessons_repo, sample_lesson):
+        tmp_lessons_repo.save(sample_lesson)
+        out = await read_tool.execute({"concept_id": sample_lesson.concept_id.value})
+        assert f"concept_id: {sample_lesson.concept_id.value}" in out
+        assert f"title: {sample_lesson.title}" in out
+        assert "parent: -" in out          # sample_lesson is a root
+        assert "graded: False" in out       # no result.json saved
+        assert "q1 [multiple_choice] Pick one" in out
+        assert "q2 [short_answer] Explain X" in out   # every question, both types, is listed
+        assert "--- lesson_html ---" in out  # header/body separator is part of the contract
+        assert sample_lesson.html in out    # full body is returned for dedup
+
+    async def test_child_lesson_shows_parent(self, read_tool, tmp_lessons_repo, sample_lesson):
+        tmp_lessons_repo.save(sample_lesson)
+        child = replace(sample_lesson, concept_id=ConceptId("child"), parent_id=sample_lesson.concept_id)
+        tmp_lessons_repo.save(child)
+        out = await read_tool.execute({"concept_id": "child"})
+        assert f"parent: {sample_lesson.concept_id.value}" in out
+
+    async def test_graded_lesson_reports_graded_true(self, read_tool, tmp_lessons_repo, sample_lesson):
+        tmp_lessons_repo.save(sample_lesson)
+        tmp_lessons_repo.save_result(Result(
+            concept_id=sample_lesson.concept_id,
+            graded_at=sample_lesson.created,
+            score="2/2",
+            by_question=(),
+        ))
+        out = await read_tool.execute({"concept_id": sample_lesson.concept_id.value})
+        assert "graded: True" in out
+
+    async def test_missing_lesson_returns_not_found(self, read_tool):
+        out = await read_tool.execute({"concept_id": "ghost"})
+        assert out == "No lesson found for 'ghost'."
+
+    async def test_invalid_concept_id_returns_error(self, read_tool):
+        out = await read_tool.execute({"concept_id": "Bad Id"})
+        assert out.startswith("Error:")

@@ -56,7 +56,7 @@ class ClaudeSDKAgent(Agent):
 
         options = ClaudeAgentOptions(
             # tools=[] disables Claude Code's built-in Read/Write/Bash/etc — we only
-            # want our 5 MCP tools exposed (no filesystem access from the LLM).
+            # want our own MCP tools exposed (no filesystem access from the LLM).
             tools=[],
             mcp_servers={_MCP_SERVER_NAME: self.mcp_config},
             allowed_tools=self.allowed_tools,

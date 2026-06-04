@@ -14,6 +14,7 @@ from ..adapters.tools.echo import EchoTool
 from ..adapters.tools.grade_lesson import GradeLessonTool
 from ..adapters.tools.list_lessons import ListLessonsTool
 from ..adapters.tools.read_answers import ReadAnswersTool
+from ..adapters.tools.read_lesson import ReadLessonTool
 from ..adapters.tools.write_lesson import WriteLessonTool
 from ..application.chat_service import ChatService
 from ..application.conversation_service import ConversationService
@@ -49,6 +50,7 @@ def build() -> AppState:
     tools = [
         EchoTool(),
         WriteLessonTool(lesson_service),
+        ReadLessonTool(lesson_service),
         ReadAnswersTool(lesson_service),
         GradeLessonTool(lesson_service),
         ListLessonsTool(lesson_service),
