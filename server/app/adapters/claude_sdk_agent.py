@@ -52,7 +52,6 @@ class ClaudeSDKAgent(Agent):
         thinking_budget: int | None = None,
     ) -> AsyncIterator[dict]:
         chosen_model = model or self.default_model
-        chosen_budget = thinking_budget if thinking_budget is not None else self.default_thinking_budget
 
         options = ClaudeAgentOptions(
             # tools=[] disables Claude Code's built-in Read/Write/Bash/etc — we only
@@ -60,14 +59,23 @@ class ClaudeSDKAgent(Agent):
             tools=[],
             mcp_servers={_MCP_SERVER_NAME: self.mcp_config},
             allowed_tools=self.allowed_tools,
+            # Isolation (CRITICAL): this agent must obey ONLY our system_prompt + MCP tools.
+            # With the defaults (setting_sources=None, skills=None) the SDK loads the user's
+            # global ~/.claude config — their CLAUDE.md and, fatally, auto-firing skills like
+            # `study`, which hijacks "X가 뭐야" into a markdown chat answer and never calls
+            # write_lesson. [] = SDK isolation mode.
+            setting_sources=[],       # no user/project/local settings.json or CLAUDE.md
+            skills=[],                # suppress every skill (kills the `study` skill hijack)
+            strict_mcp_config=True,   # use only our MCP server; ignore user MCP config
             include_partial_messages=True,
             permission_mode="bypassPermissions",
             model=chosen_model,
             system_prompt=self.system_prompt,
             max_turns=self.max_turns,
+            # Always reason at maximum effort (SDK 'max' tier). Supersedes the old
+            # per-request thinking-budget knob; thinking_budget is now ignored.
+            effort="max",
         )
-        if chosen_budget > 0:
-            options.thinking = {"type": "enabled", "budget_tokens": chosen_budget}
 
         prompt_text = _format_history_as_prompt(messages)
         # tool_use_id → tool name. SDK doesn't repeat the name on result arrival,

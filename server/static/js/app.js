@@ -32,7 +32,6 @@ async function main() {
     formSelector: "#chat-form",
     inputSelector: "#chat-input",
     modelSelector: "#model-select",
-    effortSelector: "#effort-select",
     onAssistantResponse: async (resp) => {
       // 채팅 응답 직후에도 갱신 (이벤트 늦으면 fallback)
       const tools = resp.tools_used || [];

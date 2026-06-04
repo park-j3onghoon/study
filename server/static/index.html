@@ -31,15 +31,7 @@
           <option value="claude-haiku-4-5-20251001">Haiku 4.5</option>
         </select>
       </label>
-      <label>
-        thinking
-        <select id="effort-select">
-          <option value="0">Off</option>
-          <option value="4000">Low</option>
-          <option value="8000">Mid</option>
-          <option value="16000" selected>High</option>
-        </select>
-      </label>
+      <!-- thinking 은 백엔드에서 항상 effort=max 로 고정 (드롭다운 제거) -->
     </header>
     <div id="chat-messages"></div>
     <form id="chat-form">

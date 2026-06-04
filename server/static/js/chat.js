@@ -4,7 +4,7 @@ import { chatStream, createConversation, getConversation, listModels } from "/js
 
 const LS_KEY = "study.conversation_id";
 
-let messagesEl, formEl, inputEl, modelEl, effortEl, sendBtn;
+let messagesEl, formEl, inputEl, modelEl, sendBtn;
 let onAssistantResponse = null;
 let conversationId = null;
 const history = []; // [{role:"user"|"assistant", content:"..."}, ...]
@@ -14,7 +14,6 @@ export function init(opts) {
   formEl = document.querySelector(opts.formSelector);
   inputEl = document.querySelector(opts.inputSelector);
   modelEl = document.querySelector(opts.modelSelector);
-  effortEl = document.querySelector(opts.effortSelector);
   sendBtn = formEl.querySelector("button[type=submit]");
   onAssistantResponse = opts.onAssistantResponse || null;
 
@@ -99,7 +98,7 @@ async function submit(e) {
       {
         messages: history,
         model: modelEl.value,
-        thinkingBudget: parseInt(effortEl.value, 10),
+        // thinking 은 백엔드에서 항상 effort=max 로 고정 — budget 전달 불필요.
         conversationId,
       },
       {
