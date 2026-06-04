@@ -5,6 +5,16 @@ import * as chat from "/js/chat.js";
 import * as events from "/js/events.js";
 import * as focus from "/js/focus.js";
 import * as notify from "/js/notify.js";
+import * as navigation from "/js/navigation.js";
+
+// The one "show this lesson in the center" action: highlight it in the sidebar tree and
+// load it into the iframe. Shared by every external trigger — chat focus 응답, 그리고
+// 지도(부모)→자식 postMessage 네비게이션. (사이드바 클릭은 renderRow가 setActive 후
+// onSelect→lesson.load 로 같은 결과를 낸다.)
+const showLesson = (conceptId) => {
+  sidebar.setActive(conceptId);
+  lesson.load(conceptId);
+};
 
 async function main() {
   lesson.init({
@@ -32,8 +42,7 @@ async function main() {
       // 자동 표시는 이제 이 경로로만: agent가 focus=true로 쓴 학습지를 한 번 로드.
       // (파일 이벤트는 사이드바 refresh 전용으로 decouple됨.)
       if (resp.focus_concept_id) {
-        sidebar.setActive(resp.focus_concept_id);
-        lesson.load(resp.focus_concept_id);
+        showLesson(resp.focus_concept_id);
       }
       // focus 모드에선 메시지가 숨겨져 있으니 새 응답을 unread 점으로 알린다.
       focus.markUnread();
@@ -42,6 +51,10 @@ async function main() {
 
   focus.init({ toggleSelector: "#focus-toggle" });
   notify.init();
+
+  // 지도(부모) 학습지가 iframe 안에서 postMessage 로 보낸 자식 네비게이션을 받는다.
+  // isTrustedSource=lesson.isLessonFrame 로 그 lesson iframe 의 메시지만 신뢰한다.
+  navigation.init({ onNavigate: showLesson, isTrustedSource: lesson.isLessonFrame });
 
   // lessons/ 변경 시: 사이드바 refresh 전용. 자동 iframe 로드는 더 이상 여기서 안 함
   // (클러스터 재작성 시 형제 학습지 변경이 가운데 iframe을 가로채는 yank/깜빡임 방지).

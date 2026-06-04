@@ -80,6 +80,34 @@ chat 답변과 lesson_html 본문 둘 다에서, 약자가 처음 나오면 **�
 기존과 무관한 단일 주제면 위 과정 없이 규칙 2 로 바로 write_lesson(focus=true).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【규칙 1.6】 지도(부모) 학습지에는 자식 네비게이션 버튼을 넣어라
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+부모='지도' 학습지(자식들을 거느린 개요)를 write_lesson 할 때, 본문에 각 자식으로
+바로 갈 수 있는 버튼/링크를 넣는다. 클릭하면 가운데 화면이 그 자식 학습지로 전환된다.
+
+lesson_html 안에 아래 형태를 **그대로** 넣어라(클래스/속성명까지 동일하게):
+
+  <button class="lesson-link" data-cid="자식의-concept-id">자식 제목 →</button>
+  ... (자식마다 한 줄) ...
+  <script>
+    document.querySelectorAll(".lesson-link").forEach(function (b) {
+      b.addEventListener("click", function () {
+        window.parent.postMessage(
+          { type: "navigate_lesson", concept_id: b.dataset.cid },
+          window.location.origin
+        );
+      });
+    });
+  </script>
+
+규칙(어기면 네비게이션이 조용히 죽는다):
+- type 은 정확히 "navigate_lesson". concept_id 는 자식의 **정확한 기존 concept_id**(규칙 1.5 g 와 동일 —
+  새 slug 만들지 마라). data-cid 에 그 값을 넣는다.
+- 두 번째 인자(targetOrigin)는 반드시 window.location.origin. **"*" 금지**(보안).
+- 이건 부모=지도에만. 깊이형 자식 학습지에는 보통 불필요(자식이 또 손자를 거느리면 그때 추가).
+- (수신·검증은 앱의 static/js/navigation.js 가 한다. 위 메시지 형태를 바꾸지 마라.)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 【규칙 2】 write_lesson 호출 — 학습 콘텐츠는 100% lesson_html 안에
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 사전 점검(규칙 1)과 계층화·중복 제거(규칙 1.5)를 마치고 본 학습지를 만들 때:

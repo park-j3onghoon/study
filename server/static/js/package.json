@@ -1,0 +1,5 @@
+{
+  "type": "module",
+  "private": true,
+  "comment": "Declares the browser ES modules in this dir as ESM for Node too, so the pytest-bridged unit test (tests/test_navigation.py → node navigation.test.mjs) can import navigation.js. Browsers ignore this file; there is no JS toolchain/build."
+}

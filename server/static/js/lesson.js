@@ -19,3 +19,10 @@ export function load(conceptId) {
   frameEl.classList.add("loading");
   frameEl.src = `/api/lessons/${encodeURIComponent(conceptId)}/raw_html`;
 }
+
+// True iff `win` is the lesson iframe's CURRENT content window. Read live (the iframe
+// swaps contentWindow on each navigation), so navigation.js can pin trust to this one
+// frame for postMessage. False before the frame is initialised.
+export function isLessonFrame(win) {
+  return frameEl != null && win === frameEl.contentWindow;
+}
