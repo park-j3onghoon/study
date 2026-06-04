@@ -29,6 +29,9 @@ class LessonRepository(ABC):
     @abstractmethod
     def save_result(self, result: Result) -> None: ...
 
+    @abstractmethod
+    def archive_version(self, concept_id: ConceptId) -> None: ...
+
     # Queries
     @abstractmethod
     def find_lesson(self, concept_id: ConceptId) -> Lesson | None: ...

@@ -26,8 +26,11 @@ class FileEventStream(EventStream):
     def _classify(self, path: Path) -> dict | None:
         if path.name not in _INTERESTING_FILES:
             return None
-        # lessons/{concept_id}/{file}
+        # Only lessons/{concept_id}/{file} is a real lesson — exactly one level deep.
+        # versions/{ts}/{file} archive snapshots are deeper and must not fire events.
         try:
+            if path.parent.parent.resolve() != self.lessons_root.resolve():
+                return None
             concept_id = path.parent.name
         except Exception:
             return None

@@ -36,6 +36,7 @@ class LessonSummaryDTO(BaseModel):
     title: str
     created: str
     graded: bool
+    parent_id: str | None = None
 
 
 class QuestionDTO(BaseModel):
@@ -53,6 +54,7 @@ class LessonDTO(BaseModel):
     created: str
     model: str | None = None
     thinking_budget: int | None = None
+    parent_id: str | None = None
     questions: list[QuestionDTO]
     lesson_html: str
 

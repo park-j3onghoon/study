@@ -7,7 +7,9 @@ from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Literal
 
-from .exceptions import InvalidConceptId, InvalidConversationId, InvalidQuestion
+from .exceptions import (
+    InvalidConceptId, InvalidConversationId, InvalidParent, InvalidQuestion,
+)
 
 
 _CONCEPT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -62,6 +64,13 @@ class Lesson:
     created: datetime
     model: str | None = None
     thinking_budget: int | None = None
+    # None = 루트 노드 (meta.json 키 부재도 None과 동일 취급 — backward-compat).
+    parent_id: ConceptId | None = None
+
+    def __post_init__(self) -> None:
+        # self-parent invariant: 노드는 자기 자신을 부모로 둘 수 없다.
+        if self.parent_id is not None and self.parent_id == self.concept_id:
+            raise InvalidParent(f"lesson {self.concept_id.value!r} cannot be its own parent")
 
     def submit_answers(self, values: dict[str, str], at: datetime) -> "Answers":
         """Domain operation: derive an Answers aggregate from raw user input.
@@ -114,6 +123,8 @@ class LessonSummary:
     title: str
     created: datetime
     graded: bool
+    # None = 루트 노드 (meta.json 키 부재도 None과 동일 취급 — backward-compat).
+    parent_id: ConceptId | None = None
 
 
 @dataclass(frozen=True)

@@ -17,6 +17,13 @@ class LessonNotFound(DomainException):
         self.value = value
 
 
+class InvalidParent(DomainException):
+    """parent_id violates a hierarchy invariant (self-parent / cycle / dangling)."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 class InvalidConversationId(DomainException):
     def __init__(self, value: str):
         super().__init__(f"Invalid conversation_id: {value!r}")

@@ -10,4 +10,6 @@ __pycache__/
 server/.venv/
 
 # server/lessons·conversations 는 학습 기록을 머신 간 동기화하려고 의도적으로 추적(gitignore 안 함).
+# 단, versions/ 아카이브는 로컬 안전망이라 추적하지 않는다(재작성마다 사본이 git 히스토리에 누적되는 것 방지).
+server/lessons/**/versions/
 

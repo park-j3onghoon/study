@@ -12,6 +12,15 @@ from .infrastructure.bootstrap import build
 from .interface.routes import chat, conversations, events, lessons, models
 
 
+class _NoCacheStaticFiles(StaticFiles):
+    # Dev convenience: force browser revalidation (ETag) on every asset so edits
+    # to static JS/CSS/HTML are always picked up — no stale-cache surprises.
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
+
+
 app = FastAPI(title="Study Learning App", version="0.5.0")
 
 _state = build()
@@ -24,4 +33,4 @@ app.include_router(conversations.make_router(_state.conversation_service), prefi
 app.include_router(events.make_router(_state.event_stream), prefix="/api")
 app.include_router(models.make_router(_state.model_service), prefix="/api")
 # /api routes match first; static catch-all is mounted last.
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+app.mount("/", _NoCacheStaticFiles(directory="static", html=True), name="static")

@@ -58,22 +58,59 @@ body {
   color: var(--muted);
 }
 #lesson-list { list-style: none; padding: 0; margin: 0; }
-#lesson-list li {
+#lesson-list ul { list-style: none; padding: 0; margin: 0; }
+
+/* Each row is the clickable lesson; nested .tree-children hold descendants. */
+.tree-row {
+  /* --depth drives indentation; base 12px + 14px per level. */
   padding: 8px 12px;
+  padding-left: calc(12px + var(--depth, 0) * 14px);
   border-radius: 6px;
   cursor: pointer;
   margin-bottom: 4px;
   font-size: 13px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 4px;
 }
-#lesson-list li:hover { background: var(--bg); }
-#lesson-list li.active { background: var(--accent); color: var(--accent-fg); }
-#lesson-list li .badge {
+.tree-row:hover { background: var(--bg); }
+.tree-row.active { background: var(--accent); color: var(--accent-fg); }
+.tree-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tree-row .badge {
   font-size: 11px;
   opacity: 0.7;
   margin-left: 6px;
+  flex: 0 0 auto;
+}
+
+/* Caret: ▸ collapsed / ▾ expanded; leaves reserve the same width for alignment. */
+.caret {
+  flex: 0 0 auto;
+  width: 12px;
+  text-align: center;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  font-size: 10px;
+}
+.caret::before { content: "▾"; }
+.tree-node.collapsed > .tree-row .caret::before { content: "▸"; }
+.caret.leaf { cursor: default; }
+.caret.leaf::before { content: ""; }
+.tree-row.active .caret { color: var(--accent-fg); }
+
+.tree-node.collapsed > .tree-children { display: none; }
+
+.tree-empty {
+  padding: 8px 12px;
+  color: var(--muted);
+  cursor: default;
+  font-style: italic;
 }
 
 #lesson-view {
@@ -226,6 +263,51 @@ body {
   align-self: flex-end;
 }
 #chat-form button:disabled { opacity: 0.5; cursor: wait; }
+
+/* ── Focus mode ─────────────────────────────────────────────────────────── */
+#focus-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--fg);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+#focus-toggle:hover { opacity: 1; }
+body.focus #focus-toggle { opacity: 1; background: var(--accent); color: var(--accent-fg); }
+/* unread dot: new chat content arrived while focused (message stream hidden) */
+#focus-toggle.has-unread::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  background: #ef4444;
+  border: 1px solid var(--bg);
+  border-radius: 50%;
+}
+
+body.focus {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "lesson"
+    "chat";
+}
+body.focus #sidebar { display: none; }
+body.focus #chat-panel header,
+body.focus #chat-messages { display: none; }
 
 @media (max-width: 900px) {
   body {

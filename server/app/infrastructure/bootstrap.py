@@ -58,6 +58,7 @@ def build() -> AppState:
         system_prompt=settings.system_prompt,
         default_model=settings.default_model,
         default_thinking_budget=settings.default_thinking_budget,
+        max_turns=settings.max_tool_iterations,
     )
     chat_service = ChatService(agent)
     event_stream = FileEventStream(lessons_path)

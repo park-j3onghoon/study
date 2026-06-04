@@ -3,6 +3,8 @@ import * as sidebar from "/js/sidebar.js";
 import * as lesson from "/js/lesson.js";
 import * as chat from "/js/chat.js";
 import * as events from "/js/events.js";
+import * as focus from "/js/focus.js";
+import * as notify from "/js/notify.js";
 
 async function main() {
   lesson.init({
@@ -27,22 +29,44 @@ async function main() {
       if (tools.includes("write_lesson") || tools.includes("grade_lesson")) {
         await sidebar.refresh();
       }
+      // 자동 표시는 이제 이 경로로만: agent가 focus=true로 쓴 학습지를 한 번 로드.
+      // (파일 이벤트는 사이드바 refresh 전용으로 decouple됨.)
+      if (resp.focus_concept_id) {
+        sidebar.setActive(resp.focus_concept_id);
+        lesson.load(resp.focus_concept_id);
+      }
+      // focus 모드에선 메시지가 숨겨져 있으니 새 응답을 unread 점으로 알린다.
+      focus.markUnread();
     },
   });
 
-  // lessons/ 변경 시: 사이드바 갱신 + 새 학습지면 가운데 iframe에 자동 로드.
-  // write_lesson tool이 완료되자마자 사용자가 클릭 없이 학습 시작할 수 있게.
+  focus.init({ toggleSelector: "#focus-toggle" });
+  notify.init();
+
+  // lessons/ 변경 시: 사이드바 refresh 전용. 자동 iframe 로드는 더 이상 여기서 안 함
+  // (클러스터 재작성 시 형제 학습지 변경이 가운데 iframe을 가로채는 yank/깜빡임 방지).
+  // 클러스터 재작성은 짧은 시간에 N개 lesson_changed를 쏟아내므로 ~300ms 디바운스로
+  // refresh를 1회로 coalesce한다.
   events.subscribe({
-    lesson_changed: async ({ concept_id }) => {
-      await sidebar.refresh();
-      if (concept_id) {
-        sidebar.setActive(concept_id);
-        lesson.load(concept_id);
-      }
+    lesson_changed: () => {
+      refreshSidebarDebounced();
+      notify.signalReady(); // 탭이 백그라운드면 제목 깜빡여 생성 완료 알림
     },
     lesson_graded: () => sidebar.refresh(),
     lesson_answered: () => { /* 답이 저장됐다. 사이드바 변화 없음 */ },
   });
+}
+
+const REFRESH_DEBOUNCE_MS = 300;
+let refreshTimer = null;
+
+// 연속된 lesson_changed(클러스터 재작성 등)를 모아 사이드바 refresh를 1회로 합친다.
+function refreshSidebarDebounced() {
+  if (refreshTimer) clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(() => {
+    refreshTimer = null;
+    sidebar.refresh();
+  }, REFRESH_DEBOUNCE_MS);
 }
 
 main().catch((err) => {

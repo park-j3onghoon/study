@@ -1,5 +1,6 @@
 """Disk-backed LessonRepository. Stores under {root}/{concept_id}/."""
-from datetime import datetime
+import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 
 from ..domain.exceptions import InvalidConceptId
@@ -8,6 +9,9 @@ from ..domain.models import (
 )
 from ..domain.ports import LessonRepository
 from . import _jsonio
+
+
+_VERSIONED_FILES = ("lesson.html", "meta.json", "answers.json", "result.json")
 
 
 class DiskLessonRepository(LessonRepository):
@@ -25,6 +29,7 @@ class DiskLessonRepository(LessonRepository):
             "created": lesson.created.isoformat(),
             "model": lesson.model,
             "thinking_budget": lesson.thinking_budget,
+            "parent_id": lesson.parent_id.value if lesson.parent_id else None,
             "questions": [_question_to_dict(q) for q in lesson.questions],
         })
 
@@ -46,6 +51,23 @@ class DiskLessonRepository(LessonRepository):
             "recommendation": result.recommendation,
         })
 
+    def archive_version(self, concept_id: ConceptId) -> None:
+        # Rotate the lesson before a rewrite: snapshot current files into versions/{ts}/,
+        # then drop the live answers/result so the incoming new version starts ungraded —
+        # its questions differ, so the old score no longer applies. lesson.html/meta.json
+        # stay (the subsequent save overwrites them). copy2 (not move) survives a failed write.
+        # ts carries microseconds so two rotations in the same second don't collide.
+        lesson_dir = self._dir(concept_id)
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%fZ")
+        version_dir = lesson_dir / "versions" / ts
+        version_dir.mkdir(parents=True, exist_ok=True)
+        for name in _VERSIONED_FILES:
+            src = lesson_dir / name
+            if src.exists():
+                shutil.copy2(src, version_dir / name)
+        for name in ("answers.json", "result.json"):
+            (lesson_dir / name).unlink(missing_ok=True)
+
     # ── Queries ─────────────────────────────────────────────────────────────
     def find_lesson(self, concept_id: ConceptId) -> Lesson | None:
         d = self._dir(concept_id)
@@ -62,6 +84,7 @@ class DiskLessonRepository(LessonRepository):
             created=datetime.fromisoformat(meta["created"]),
             model=meta.get("model"),
             thinking_budget=meta.get("thinking_budget"),
+            parent_id=_parent_id_from_meta(meta),
         )
 
     def find_answers(self, concept_id: ConceptId) -> Answers | None:
@@ -108,6 +131,7 @@ class DiskLessonRepository(LessonRepository):
                 title=meta["title"],
                 created=datetime.fromisoformat(meta["created"]),
                 graded=(d / "result.json").exists(),
+                parent_id=_parent_id_from_meta(meta),
             ))
         return summaries
 
@@ -116,6 +140,18 @@ class DiskLessonRepository(LessonRepository):
 
     def _dir(self, concept_id: ConceptId) -> Path:
         return self.root / concept_id.value
+
+
+def _parent_id_from_meta(meta: dict) -> ConceptId | None:
+    # Key absent or null → root. Corrupt value (e.g. git-edited) degrades to root
+    # rather than crashing the read — mirrors the corrupt-meta skip in list_summaries.
+    raw = meta.get("parent_id")
+    if not raw:
+        return None
+    try:
+        return ConceptId(raw)
+    except InvalidConceptId:
+        return None
 
 
 def _question_to_dict(q: Question) -> dict:

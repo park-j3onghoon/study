@@ -1,6 +1,7 @@
 """HTTP route smoke tests. Uses a hand-built FastAPI app with stub agent so we
 don't need an Anthropic API key.
 """
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -13,7 +14,7 @@ from app.application.chat_service import ChatService
 from app.application.conversation_service import ConversationService
 from app.application.lesson_service import LessonService
 from app.application.model_service import ModelService
-from app.domain.models import ModelInfo
+from app.domain.models import ConceptId, ModelInfo
 from app.domain.ports import EventStream, ModelCatalog
 from app.interface.routes import chat, conversations, events, lessons, models
 
@@ -133,6 +134,30 @@ def test_lesson_submit_answers_flow(client, sample_lesson, tmp_path):
     detail = client.get(f"/api/lessons/{cid}").json()
     assert detail["title"] == sample_lesson.title
     assert len(detail["questions"]) == 2
+
+
+def test_lessons_list_propagates_parent_id(client, sample_lesson, tmp_path):
+    repo = DiskLessonRepository(tmp_path / "lessons")
+    repo.save(sample_lesson)  # root: parent_id None
+    child = replace(sample_lesson, concept_id=ConceptId("child-concept"),
+                    parent_id=sample_lesson.concept_id)
+    repo.save(child)
+
+    payload = client.get("/api/lessons").json()
+    by_id = {item["concept_id"]: item for item in payload}
+    assert by_id[sample_lesson.concept_id.value]["parent_id"] is None
+    assert by_id["child-concept"]["parent_id"] == sample_lesson.concept_id.value
+
+
+def test_lesson_detail_propagates_parent_id(client, sample_lesson, tmp_path):
+    repo = DiskLessonRepository(tmp_path / "lessons")
+    repo.save(sample_lesson)
+    child = replace(sample_lesson, concept_id=ConceptId("child-concept"),
+                    parent_id=sample_lesson.concept_id)
+    repo.save(child)
+
+    detail = client.get("/api/lessons/child-concept").json()
+    assert detail["parent_id"] == sample_lesson.concept_id.value
 
 
 def test_models_returns_latest_per_family(client):

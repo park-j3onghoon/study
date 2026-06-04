@@ -18,6 +18,9 @@ from ..domain.ports import Agent, Tool
 
 _MCP_SERVER_NAME = "learning"
 _MCP_TOOL_PREFIX = f"mcp__{_MCP_SERVER_NAME}__"
+# write_lesson signals success with this prefix; see WriteLessonTool.execute.
+_WRITE_LESSON = "write_lesson"
+_WRITE_SUCCESS_PREFIX = "Created"
 
 
 def _strip_prefix(name: str) -> str:
@@ -31,10 +34,12 @@ class ClaudeSDKAgent(Agent):
         system_prompt: str | None = None,
         default_model: str | None = None,
         default_thinking_budget: int = 0,
+        max_turns: int | None = None,
     ):
         self.system_prompt = system_prompt
         self.default_model = default_model
         self.default_thinking_budget = default_thinking_budget
+        self.max_turns = max_turns
 
         sdk_tools = [_wrap_tool(t) for t in tools]
         self.mcp_config = create_sdk_mcp_server(name=_MCP_SERVER_NAME, tools=sdk_tools)
@@ -59,6 +64,7 @@ class ClaudeSDKAgent(Agent):
             permission_mode="bypassPermissions",
             model=chosen_model,
             system_prompt=self.system_prompt,
+            max_turns=self.max_turns,
         )
         if chosen_budget > 0:
             options.thinking = {"type": "enabled", "budget_tokens": chosen_budget}
@@ -68,6 +74,9 @@ class ClaudeSDKAgent(Agent):
         # so we remember it from ToolUseBlock and emit `tool_use_complete` when
         # the matching ToolResultBlock comes back inside a UserMessage.
         tool_names: dict[str, str] = {}
+        # tool_use_id → concept_id requested with focus=true. SR-3: emit focus_lesson
+        # only when the matching result is a success, never from the input alone.
+        pending_focus: dict[str, str] = {}
         thinking_open = False
 
         async for msg in query(prompt=prompt_text, options=options):
@@ -100,7 +109,12 @@ class ClaudeSDKAgent(Agent):
             elif isinstance(msg, AssistantMessage):
                 for block in msg.content:
                     if isinstance(block, ToolUseBlock):
-                        tool_names[block.id] = _strip_prefix(block.name)
+                        name = _strip_prefix(block.name)
+                        tool_names[block.id] = name
+                        if name == _WRITE_LESSON:
+                            cid = _focus_concept_id(block.input)
+                            if cid is not None:
+                                pending_focus[block.id] = cid
                 if msg.error:
                     yield {"type": "error", "message": f"Assistant error: {msg.error}"}
             elif isinstance(msg, UserMessage):
@@ -110,6 +124,9 @@ class ClaudeSDKAgent(Agent):
                         if tu_id is not None:
                             name = tool_names.pop(tu_id, "tool")
                             yield {"type": "tool_use_complete", "name": name}
+                            cid = pending_focus.pop(tu_id, None)
+                            if cid is not None and _result_succeeded(block):
+                                yield {"type": "focus_lesson", "concept_id": cid}
             elif isinstance(msg, ResultMessage):
                 if msg.is_error:
                     detail = ", ".join(msg.errors or []) or (msg.stop_reason or "unknown error")
@@ -140,6 +157,32 @@ def _wrap_tool(t: Tool) -> SdkMcpTool:
         input_schema=t.input_schema,
         handler=handler,
     )
+
+
+def _focus_concept_id(tool_input: Any) -> str | None:
+    """concept_id of a write_lesson call iff it set focus=true — the lesson the user asked
+    for, which the UI auto-opens. The system prompt requires focus=true on the target and
+    omits it on parent/sibling rewrites, so those don't steal the viewport."""
+    if not isinstance(tool_input, dict) or tool_input.get("focus") is not True:
+        return None
+    cid = tool_input.get("concept_id")
+    return cid if isinstance(cid, str) and cid else None
+
+
+def _result_succeeded(block: Any) -> bool:
+    """A write_lesson tool result is a success when its text starts with 'Created'."""
+    if getattr(block, "is_error", False):
+        return False
+    content = getattr(block, "content", None)
+    text = content if isinstance(content, str) else _text_of(content)
+    return text.startswith(_WRITE_SUCCESS_PREFIX)
+
+
+def _text_of(content: Any) -> str:
+    if not isinstance(content, list):
+        return ""
+    parts = [b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text"]
+    return "".join(parts)
 
 
 def _format_history_as_prompt(messages: list[dict]) -> str:

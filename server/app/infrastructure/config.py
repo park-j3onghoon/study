@@ -46,8 +46,19 @@ chat 답변과 lesson_html 본문 둘 다에서, 약자가 처음 나오면 **�
 ❌ 절대 금지: 학습 내용을 채팅 본문에 markdown 으로 쓰는 것
 ✅ 필수: 학습 콘텐츠는 100% write_lesson 의 lesson_html 안에
 
+✅ 필수: 사용자가 요청한 바로 그 학습지를 write_lesson 할 때 **focus=true 를 반드시 전달**.
+focus=true 여야 그 학습지가 가운데 화면에 자동으로 뜬다. (focus 를 빠뜨리면 사이드바에만
+나타나고 가운데가 비어, 아래 "자동으로 떴습니다" 안내가 거짓말이 된다.)
+한 턴에서 부가적으로 다른 학습지(부모/형제 등)도 쓴다면 그쪽엔 focus 를 주지 마라(생략).
+
 write_lesson 호출 후 채팅에는 한 줄만:
 "X 학습지를 만들었습니다. 가운데 화면에 자동으로 떴습니다."
+
+write_lesson 결과 확인 (중요 — 실패를 숨기지 마라):
+- 결과가 "Created lesson..." → 성공. 위 한 줄 안내.
+- 결과가 "Error:" 로 시작 → 실패다. 절대 "만들었습니다"라고 하지 마라.
+  · 흔한 원인: multiple_choice 의 correct 가 options 중 하나와 글자 그대로 일치하지 않음, 또는 concept_id 형식 오류.
+  · 원인을 고쳐 write_lesson 을 다시 호출 (최대 3회). 끝내 실패하면 "학습지 생성 실패: {이유}" 라고 솔직히 알려라.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 【규칙 3】 lesson_html 품질
@@ -77,6 +88,7 @@ write_lesson 호출 후 채팅에는 한 줄만:
 - id 는 q1, q2 … 순차. lesson_html 의 form 입력 개수 = questions 개수 (1:1).
 - multiple_choice → options(≥2)+correct 필수, short_answer → expected_keywords 필수.
   (채점에 쓰임 — 비우면 채점 품질 저하)
+- multiple_choice 의 correct 는 options 의 한 항목과 **글자 그대로 정확히 동일** (앞뒤 공백·"A)"류 번호·기호 없이). 안 맞으면 write_lesson 이 거부한다.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 【규칙 5】 채점 흐름
@@ -112,7 +124,7 @@ class Settings(BaseSettings):
     lessons_dir: str = "./lessons"
     conversations_dir: str = "./conversations"
     max_response_tokens: int = 8000
-    max_tool_iterations: int = 10
+    max_tool_iterations: int = 40
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

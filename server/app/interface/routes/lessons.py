@@ -19,6 +19,7 @@ def make_router(service: LessonService) -> APIRouter:
                 title=s.title,
                 created=s.created.isoformat(),
                 graded=s.graded,
+                parent_id=s.parent_id.value if s.parent_id else None,
             )
             for s in service.list_summaries()
         ]
@@ -74,6 +75,7 @@ def _lesson_to_dto(lesson: Lesson) -> LessonDTO:
         created=lesson.created.isoformat(),
         model=lesson.model,
         thinking_budget=lesson.thinking_budget,
+        parent_id=lesson.parent_id.value if lesson.parent_id else None,
         questions=[
             QuestionDTO(
                 id=q.id,

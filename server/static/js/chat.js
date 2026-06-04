@@ -84,6 +84,9 @@ async function submit(e) {
   let assistantText = "";
   let thinkingEl = null;
   const toolsUsed = [];
+  // Last focus_lesson signal from a successful focused write_lesson. Multiple
+  // focused writes in one turn collapse to the last (matches backend SR-3).
+  let focusConceptId = null;
 
   try {
     if (!conversationId) {
@@ -122,6 +125,9 @@ async function submit(e) {
           toolsUsed.push(name);
           appendMessage("tool", `✓ ${name} 완료`);
         },
+        focus_lesson: ({ concept_id }) => {
+          if (concept_id) focusConceptId = concept_id;
+        },
         text_delta: ({ text }) => {
           if (!assistantEl) assistantEl = appendMessage("assistant", "");
           assistantText += text;
@@ -139,7 +145,9 @@ async function submit(e) {
     if (assistantText) {
       history.push({ role: "assistant", content: assistantText });
     }
-    if (onAssistantResponse) onAssistantResponse({ tools_used: toolsUsed });
+    if (onAssistantResponse) {
+      onAssistantResponse({ tools_used: toolsUsed, focus_concept_id: focusConceptId });
+    }
   } catch (err) {
     appendMessage("error", `Error: ${err.message}`);
   } finally {
