@@ -20,6 +20,8 @@
     <iframe id="lesson-frame" sandbox="allow-scripts allow-same-origin allow-forms" style="display:none"></iframe>
   </main>
 
+  <div id="chat-resizer" title="드래그하여 채팅 높이 조절"></div>
+
   <aside id="chat-panel">
     <header>
       <h2>채팅</h2>
@@ -32,6 +34,7 @@
         </select>
       </label>
       <!-- thinking 은 백엔드에서 항상 effort=max 로 고정 (드롭다운 제거) -->
+      <button id="distill-today" type="button" title="오늘 Claude 세션에서 배운 걸 학습지로 정리">🗓 오늘 학습 정리</button>
     </header>
     <div id="chat-messages"></div>
     <form id="chat-form">
@@ -40,6 +43,10 @@
     </form>
   </aside>
 
+  <!-- 채팅 응답 렌더: marked(MD→HTML) + DOMPurify(주입 전 XSS 살균). 모듈은 defer
+       되므로 이 클래식 스크립트가 먼저 실행돼 window.marked/DOMPurify 가 준비된다. -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@18/lib/marked.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
   <script type="module" src="/js/app.js"></script>
 </body>
 </html>

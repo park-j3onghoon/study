@@ -62,7 +62,8 @@ async function restoreConversation() {
       if (m.role !== "user" && m.role !== "assistant") continue;
       const content = typeof m.content === "string" ? m.content : "";
       if (!content) continue;
-      appendMessage(m.role, content);
+      const el = appendMessage(m.role, content);
+      if (m.role === "assistant") renderMarkdown(el, content);
       history.push({ role: m.role, content });
     }
   } catch {
@@ -74,9 +75,16 @@ async function submit(e) {
   e.preventDefault();
   const text = inputEl.value.trim();
   if (!text) return;
+  inputEl.value = "";
+  await sendMessage(text);
+}
+
+// Send one user turn through the agent. Exported so buttons (e.g. "🗓 오늘 학습 정리")
+// can fire a canned prompt without going through the input box.
+export async function sendMessage(text) {
+  if (!text) return;
   appendMessage("user", text);
   history.push({ role: "user", content: text });
-  inputEl.value = "";
   setSending(true);
 
   let assistantEl = null;
@@ -141,6 +149,7 @@ async function submit(e) {
         },
       },
     );
+    if (assistantEl) renderMarkdown(assistantEl, assistantText);
     if (assistantText) {
       history.push({ role: "assistant", content: assistantText });
     }
@@ -166,6 +175,18 @@ function appendMessage(role, text) {
   messagesEl.appendChild(div);
   scrollToBottom();
   return div;
+}
+
+// 스트리밍 중엔 textContent 로 빠르게 쌓다가(토큰마다 재파싱 안 함) 턴이 끝나면 누적
+// 텍스트를 한 번에 마크다운→HTML 로 교체한다. sanitize 는 모델 출력에 섞인 HTML/스크립트
+// 주입(학습지·도구 결과 경유 프롬프트 인젝션 포함)을 DOM 주입 전에 막는 방어선.
+function renderMarkdown(el, text) {
+  if (window.marked && window.DOMPurify) {
+    el.innerHTML = window.DOMPurify.sanitize(window.marked.parse(text, { gfm: true, breaks: true }));
+    el.classList.add("md");
+  } else {
+    el.textContent = text; // CDN 미로딩(오프라인) 폴백 — raw 노출이지만 동작은 유지
+  }
 }
 
 function scrollToBottom() {

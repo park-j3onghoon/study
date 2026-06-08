@@ -35,13 +35,26 @@ html, body {
 body {
   display: grid;
   grid-template-columns: 250px 1fr;
-  grid-template-rows: 1fr 34vh;
+  grid-template-rows: 1fr 6px var(--chat-h, 34vh);
   grid-template-areas:
     "sidebar lesson"
+    "resizer resizer"
     "chat    chat";
   height: 100vh;
   overflow: hidden;
 }
+
+/* 학습지/채팅 경계 드래그 핸들. 채팅 높이(--chat-h)는 resize.js 가 조절·저장. */
+#chat-resizer {
+  grid-area: resizer;
+  cursor: row-resize;
+  background: var(--border);
+  touch-action: none;
+}
+#chat-resizer:hover { background: var(--accent); }
+/* 드래그가 iframe 위를 지날 때 iframe 이 포인터를 삼켜 끊기는 것 방지. */
+body.resizing { cursor: row-resize; user-select: none; }
+body.resizing #lesson-frame { pointer-events: none; }
 
 #sidebar {
   grid-area: sidebar;
@@ -236,6 +249,43 @@ body {
   align-self: center;
 }
 
+/* 마크다운 렌더된 assistant 메시지: raw 줄바꿈(pre-wrap) 대신 블록요소 간격으로 레이아웃 */
+.chat-msg.md { white-space: normal; }
+.chat-msg.md > :first-child { margin-top: 0; }
+.chat-msg.md > :last-child { margin-bottom: 0; }
+.chat-msg.md p { margin: 0 0 8px; }
+.chat-msg.md ul, .chat-msg.md ol { margin: 0 0 8px; padding-left: 22px; }
+.chat-msg.md li { margin: 2px 0; }
+.chat-msg.md h1, .chat-msg.md h2, .chat-msg.md h3, .chat-msg.md h4 { margin: 12px 0 6px; line-height: 1.3; }
+.chat-msg.md h1 { font-size: 1.25em; }
+.chat-msg.md h2 { font-size: 1.18em; }
+.chat-msg.md h3 { font-size: 1.08em; }
+.chat-msg.md code {
+  background: var(--card);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.88em;
+}
+.chat-msg.md pre {
+  background: var(--card);
+  padding: 10px 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0 0 8px;
+}
+.chat-msg.md pre code { background: none; padding: 0; }
+.chat-msg.md blockquote {
+  margin: 0 0 8px;
+  padding: 2px 0 2px 10px;
+  border-left: 3px solid var(--border);
+  color: var(--muted);
+}
+.chat-msg.md table { border-collapse: collapse; margin: 0 0 8px; }
+.chat-msg.md th, .chat-msg.md td { border: 1px solid var(--border); padding: 4px 8px; }
+.chat-msg.md a { color: var(--accent); }
+.chat-msg.md img { max-width: 100%; }
+
 #chat-form {
   padding: 12px;
   border-top: 1px solid var(--border);
@@ -300,14 +350,12 @@ body.focus #focus-toggle { opacity: 1; background: var(--accent); color: var(--a
 
 body.focus {
   grid-template-columns: 1fr;
-  grid-template-rows: 1fr auto;
-  grid-template-areas:
-    "lesson"
-    "chat";
+  grid-template-rows: 1fr;
+  grid-template-areas: "lesson";
 }
-body.focus #sidebar { display: none; }
-body.focus #chat-panel header,
-body.focus #chat-messages { display: none; }
+body.focus #sidebar,
+body.focus #chat-panel,
+body.focus #chat-resizer { display: none; }
 
 @media (max-width: 900px) {
   body {
@@ -315,6 +363,7 @@ body.focus #chat-messages { display: none; }
   }
 }
 @media (max-width: 767px) {
+  #chat-resizer { display: none; }
   body {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto;

@@ -1,4 +1,4 @@
-// Focus mode: hide the sidebar + collapse chat so the lesson fills the screen.
+// Focus mode: hide the sidebar + the whole chat panel so the lesson fills the screen.
 // Toggle with the 📖 button or `f`; exit with `Esc`. State persists in localStorage.
 // Keyboard shortcuts are suppressed while an editable field has focus, so typing
 // "f" in the chat box doesn't toggle. New chat content arriving while focused

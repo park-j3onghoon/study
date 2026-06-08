@@ -6,6 +6,7 @@ import * as events from "/js/events.js";
 import * as focus from "/js/focus.js";
 import * as notify from "/js/notify.js";
 import * as navigation from "/js/navigation.js";
+import * as resize from "/js/resize.js";
 
 // The one "show this lesson in the center" action: highlight it in the sidebar tree and
 // load it into the iframe. Shared by every external trigger — chat focus 응답, 그리고
@@ -15,6 +16,11 @@ const showLesson = (conceptId) => {
   sidebar.setActive(conceptId);
   lesson.load(conceptId);
 };
+
+const DISTILL_PROMPT =
+  "오늘 학습 정리: 오늘 Claude 세션에서 새로 배운 것과 끈질긴 논의 끝의 결론을 일반 " +
+  "소프트웨어 엔지니어링 학습 내용으로 추려 주제별 학습지로 만들고, 학습지 트리도 정리해줘. " +
+  "회사 고유 정보(내부 시스템/서비스 이름 등)는 빼고 일반화해줘.";
 
 async function main() {
   lesson.init({
@@ -48,7 +54,11 @@ async function main() {
     },
   });
 
+  const distillBtn = document.querySelector("#distill-today");
+  if (distillBtn) distillBtn.addEventListener("click", () => chat.sendMessage(DISTILL_PROMPT));
+
   focus.init({ toggleSelector: "#focus-toggle" });
+  resize.init({ resizerSelector: "#chat-resizer" });
   notify.init();
 
   // 지도(부모) 학습지가 iframe 안에서 postMessage 로 보낸 자식 네비게이션을 받는다.
