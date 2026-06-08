@@ -9,12 +9,17 @@ from typing import Literal
 
 from .exceptions import (
     InvalidConceptId, InvalidConversationId, InvalidParent, InvalidQuestion,
+    InvalidSessionId,
 )
 
 
 _CONCEPT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 # uuid4().hex → 32 lowercase hex chars. Blocks path traversal and arbitrary input.
 _CONVERSATION_ID_RE = re.compile(r"^[0-9a-f]{32}$")
+# Claude Code session filename stem — a hyphenated UUID4 (8-4-4-4-12). Blocks path traversal.
+_SESSION_ID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+)
 
 QuestionType = Literal["multiple_choice", "short_answer"]
 _VALID_QUESTION_TYPES: frozenset[str] = frozenset({"multiple_choice", "short_answer"})
@@ -176,5 +181,28 @@ class ModelInfo:
     display_name: str
     family: str
     created_at: datetime
+
+
+@dataclass(frozen=True)
+class SessionId:
+    """Claude Code session id — the .jsonl filename stem (a UUID4).
+    Regex blocks path traversal; see DiskClaudeSessionReader."""
+    value: str
+
+    def __post_init__(self) -> None:
+        if not _SESSION_ID_RE.match(self.value):
+            raise InvalidSessionId(self.value)
+
+
+@dataclass(frozen=True)
+class ClaudeSessionSummary:
+    """One Claude session's metadata for the distill picker (read-only external source)."""
+    session_id: SessionId
+    title: str
+    project: str
+    started_at: datetime
+    user_turns: int
+    assistant_turns: int
+    preview: str
 
 

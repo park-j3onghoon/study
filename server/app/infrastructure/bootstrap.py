@@ -4,16 +4,20 @@ Adding a new tool: import it and append to the `tools` list inside build().
 Adding a new repository: instantiate it instead of DiskLessonRepository.
 """
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from ..adapters.claude_sdk_agent import ClaudeSDKAgent
+from ..adapters.claude_sessions import DiskClaudeSessionReader
 from ..adapters.disk_conversation_repository import DiskConversationRepository
 from ..adapters.disk_repository import DiskLessonRepository
 from ..adapters.file_event_stream import FileEventStream
 from ..adapters.static_model_catalog import StaticModelCatalog
 from ..adapters.tools.echo import EchoTool
 from ..adapters.tools.grade_lesson import GradeLessonTool
+from ..adapters.tools.list_claude_sessions import ListClaudeSessionsTool
 from ..adapters.tools.list_lessons import ListLessonsTool
 from ..adapters.tools.read_answers import ReadAnswersTool
+from ..adapters.tools.read_claude_session import ReadClaudeSessionTool
 from ..adapters.tools.read_lesson import ReadLessonTool
 from ..adapters.tools.write_lesson import WriteLessonTool
 from ..application.chat_service import ChatService
@@ -47,6 +51,10 @@ def build() -> AppState:
     conversation_repo = DiskConversationRepository(conversations_path)
     lesson_service = LessonService(lesson_repo)
     conversation_service = ConversationService(conversation_repo)
+    tz = ZoneInfo(settings.timezone)
+    session_reader = DiskClaudeSessionReader(
+        base=Path(settings.claude_projects_dir).expanduser(), tz=tz
+    )
     tools = [
         EchoTool(),
         WriteLessonTool(lesson_service),
@@ -54,6 +62,8 @@ def build() -> AppState:
         ReadAnswersTool(lesson_service),
         GradeLessonTool(lesson_service),
         ListLessonsTool(lesson_service),
+        ListClaudeSessionsTool(session_reader, tz),
+        ReadClaudeSessionTool(session_reader, settings.session_max_chars),
     ]
     agent = ClaudeSDKAgent(
         tools=tools,

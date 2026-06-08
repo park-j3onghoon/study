@@ -8,11 +8,12 @@ CQS:
   Query methods return data (no side effect).
 """
 from abc import ABC, abstractmethod
+from datetime import date
 from typing import Any, AsyncIterator
 
 from .models import (
-    Answers, ConceptId, Conversation, ConversationId, ConversationSummary,
-    Lesson, LessonSummary, ModelInfo, Result,
+    Answers, ClaudeSessionSummary, ConceptId, Conversation, ConversationId,
+    ConversationSummary, Lesson, LessonSummary, ModelInfo, Result, SessionId,
 )
 
 
@@ -57,6 +58,17 @@ class Tool(ABC):
 
     @abstractmethod
     async def execute(self, args: dict[str, Any]) -> str: ...
+
+
+class ClaudeSessionReader(ABC):
+    """Reads Claude Code session transcripts (read-only external source).
+    Behind a port so tools never touch the filesystem directly and tests inject a fake base."""
+
+    @abstractmethod
+    def list_sessions_on(self, on_date: date) -> list[ClaudeSessionSummary]: ...
+
+    @abstractmethod
+    def read_session(self, session_id: SessionId, max_chars: int) -> str: ...
 
 
 class Agent(ABC):
