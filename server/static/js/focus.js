@@ -38,7 +38,7 @@ function apply(on) {
 
 function onKeydown(e) {
   if (isEditable(document.activeElement)) return; // don't hijack typing
-  if (e.key === "f" || e.key === "F") {
+  if (e.key === "f" || e.key === "F" || (e.key === "Escape" && e.metaKey)) {
     e.preventDefault();
     toggle();
   } else if (e.key === "Escape" && document.body.classList.contains(FOCUS_CLASS)) {

@@ -1,50 +1,56 @@
-// Drag the gutter between the lesson area and the chat panel to resize chat height.
-// Height lives in the --chat-h CSS var (grid track) and persists in localStorage;
-// it is re-clamped to the viewport on restore so a tall saved value can't bury the lesson.
-const LS_KEY = "study.chat_h";
-const MIN_PX = 80;
-const LESSON_MIN_PX = 150; // 채팅이 아무리 커도 학습지에 남길 최소 높이
+// Drag handles that resize panels: chat height, left lesson-list width, right TOC width.
+// Each size lives in a CSS var (a grid track) and persists in localStorage, re-clamped to
+// the viewport on restore. Width/height vars are independent of the hide toggles' *-shown
+// multipliers, so dragging and collapsing never fight over the same value.
+const MIN_PX = 80;          // a panel can't shrink below this
+const CENTER_MIN_PX = 150;  // always leave this for the lesson (the flexible track)
 
-let resizerEl = null;
+const PANELS = [
+  { sel: "#chat-resizer", cssVar: "--chat-h", lsKey: "study.chat_h", cursor: "row-resize",
+    sizeFrom: (e) => window.innerHeight - e.clientY, avail: () => window.innerHeight },
+  { sel: "#lessons-resizer", cssVar: "--lessons-w", lsKey: "study.lessons_w", cursor: "col-resize",
+    sizeFrom: (e) => e.clientX, avail: () => window.innerWidth },
+  { sel: "#toc-resizer", cssVar: "--toc-w", lsKey: "study.toc_w", cursor: "col-resize",
+    sizeFrom: (e) => window.innerWidth - e.clientX, avail: () => window.innerWidth },
+];
 
-export function init({ resizerSelector }) {
-  resizerEl = document.querySelector(resizerSelector);
-  if (!resizerEl) return;
-  restore();
-  resizerEl.addEventListener("pointerdown", onPointerDown);
+export function init() {
+  for (const p of PANELS) {
+    const el = document.querySelector(p.sel);
+    if (!el) continue;
+    restore(p);
+    el.addEventListener("pointerdown", (e) => onDown(e, p));
+  }
 }
 
-function onPointerDown(e) {
-  e.preventDefault(); // 텍스트 선택 시작 방지
-  window.addEventListener("pointermove", onPointerMove);
-  window.addEventListener("pointerup", onPointerUp, { once: true });
+function onDown(e, p) {
+  e.preventDefault();
+  const move = (ev) => setSize(p, p.sizeFrom(ev));
+  const up = () => {
+    window.removeEventListener("pointermove", move);
+    document.body.classList.remove("resizing");
+    document.body.style.cursor = "";
+    persist(p);
+  };
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", up, { once: true });
   document.body.classList.add("resizing");
+  document.body.style.cursor = p.cursor;
 }
 
-function onPointerMove(e) {
-  setHeight(window.innerHeight - e.clientY);
+function setSize(p, px) {
+  const max = p.avail() - CENTER_MIN_PX;
+  const v = Math.max(MIN_PX, Math.min(px, max));
+  document.body.style.setProperty(p.cssVar, `${v}px`);
 }
 
-function onPointerUp() {
-  window.removeEventListener("pointermove", onPointerMove);
-  document.body.classList.remove("resizing");
-  persist();
+function persist(p) {
+  const v = document.body.style.getPropertyValue(p.cssVar);
+  try { if (v) localStorage.setItem(p.lsKey, v); } catch { /* private mode: ignore */ }
 }
 
-function setHeight(px) {
-  const max = window.innerHeight - LESSON_MIN_PX;
-  const h = Math.max(MIN_PX, Math.min(px, max));
-  document.body.style.setProperty("--chat-h", `${h}px`);
-}
-
-function persist() {
-  const v = document.body.style.getPropertyValue("--chat-h");
-  try { if (v) localStorage.setItem(LS_KEY, v); } catch { /* private mode: ignore */ }
-}
-
-function restore() {
+function restore(p) {
   let saved;
-  try { saved = localStorage.getItem(LS_KEY); } catch { return; }
-  if (!saved) return;
-  setHeight(parseInt(saved, 10));
+  try { saved = localStorage.getItem(p.lsKey); } catch { return; }
+  if (saved) setSize(p, parseInt(saved, 10));
 }

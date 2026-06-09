@@ -7,6 +7,7 @@ import * as focus from "/js/focus.js";
 import * as notify from "/js/notify.js";
 import * as navigation from "/js/navigation.js";
 import * as resize from "/js/resize.js";
+import * as toc from "/js/toc.js";
 
 // The one "show this lesson in the center" action: highlight it in the sidebar tree and
 // load it into the iframe. Shared by every external trigger — chat focus 응답, 그리고
@@ -22,6 +23,17 @@ const DISTILL_PROMPT =
   "소프트웨어 엔지니어링 학습 내용으로 추려 주제별 학습지로 만들고, 학습지 트리도 정리해줘. " +
   "회사 고유 정보(내부 시스템/서비스 이름 등)는 빼고 일반화해줘.";
 
+// 사이드바 토글: bodyClass 를 켜면 해당 사이드바가 숨고 그 그리드 열이 회수된다.
+// aria-pressed 는 "사이드바가 보이는가"(=숨김의 반대)를 반영.
+function wireSidebarToggle(btnSelector, bodyClass) {
+  const btn = document.querySelector(btnSelector);
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    const hidden = document.body.classList.toggle(bodyClass);
+    btn.setAttribute("aria-pressed", String(!hidden));
+  });
+}
+
 async function main() {
   lesson.init({
     emptySelector: "#lesson-empty",
@@ -32,6 +44,8 @@ async function main() {
     listSelector: "#lesson-list",
     onSelect: (conceptId) => lesson.load(conceptId),
   });
+
+  toc.init({ frameSelector: "#lesson-frame", listSelector: "#toc-list" });
 
   chat.init({
     messagesSelector: "#chat-messages",
@@ -57,8 +71,12 @@ async function main() {
   const distillBtn = document.querySelector("#distill-today");
   if (distillBtn) distillBtn.addEventListener("click", () => chat.sendMessage(DISTILL_PROMPT));
 
+  wireSidebarToggle("#toggle-lessons", "hide-lessons");
+  wireSidebarToggle("#toggle-toc", "hide-toc");
+  wireSidebarToggle("#toggle-chat", "hide-chat");
+
   focus.init({ toggleSelector: "#focus-toggle" });
-  resize.init({ resizerSelector: "#chat-resizer" });
+  resize.init();
   notify.init();
 
   // 지도(부모) 학습지가 iframe 안에서 postMessage 로 보낸 자식 네비게이션을 받는다.

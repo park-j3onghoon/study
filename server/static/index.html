@@ -12,13 +12,27 @@
     <ul id="lesson-list"></ul>
   </aside>
 
+  <div id="lessons-resizer" title="드래그하여 학습지 목록 너비 조절"></div>
+
   <main id="lesson-view">
-    <button id="focus-toggle" type="button" title="집중 모드 (f 토글 / Esc 해제)" aria-pressed="false">📖</button>
+    <div id="lesson-toolbar">
+      <button id="toggle-lessons" class="view-toggle" type="button" title="학습지 목록 사이드바 열고/닫기" aria-pressed="true">📚</button>
+      <button id="toggle-toc" class="view-toggle" type="button" title="이 학습지 목차 열고/닫기" aria-pressed="true">📑</button>
+      <button id="toggle-chat" class="view-toggle" type="button" title="채팅창 열고/닫기" aria-pressed="true">💬</button>
+      <button id="focus-toggle" class="view-toggle" type="button" title="집중 모드 (f 또는 Cmd+Esc 토글, Esc 해제)" aria-pressed="false">📖</button>
+    </div>
     <div id="lesson-empty">
       좌측에서 학습지를 선택하거나, 하단 채팅에 <strong>"X 공부할래"</strong> 같이 입력하세요.
     </div>
     <iframe id="lesson-frame" sandbox="allow-scripts allow-same-origin allow-forms" style="display:none"></iframe>
   </main>
+
+  <aside id="toc">
+    <h2>목차</h2>
+    <ul id="toc-list"></ul>
+  </aside>
+
+  <div id="toc-resizer" title="드래그하여 목차 너비 조절"></div>
 
   <div id="chat-resizer" title="드래그하여 채팅 높이 조절"></div>
 
